@@ -99,6 +99,17 @@ public partial class DataMenuWindow : Window
             _registeredKeys.Add(id);
     }
 
+    /// <summary>
+    /// Choix dès l'appui sur le bouton : dans une fenêtre sans focus, Windows refuse la capture
+    /// de la souris dont Button a besoin pour déclencher Click au relâchement.
+    /// </summary>
+    private void Item_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        Item_Click(sender, e);
+    }
+
+    /// <summary>Click reste utile pour l'accessibilité (lecteurs d'écran, tests).</summary>
     private void Item_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: DataMenuItem item })
@@ -107,7 +118,7 @@ public partial class DataMenuWindow : Window
 
     private void Pick(DataMenuItem item)
     {
-        if (!item.CanCopy)
+        if (IsClosing || !item.CanCopy)
             return; // cellule vide : rien à copier, le menu reste ouvert
         Dismiss();
         _onPick(item);

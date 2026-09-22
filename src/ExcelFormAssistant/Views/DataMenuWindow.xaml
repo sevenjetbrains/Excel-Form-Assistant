@@ -53,6 +53,7 @@
                     <DataTemplate>
                         <Button Style="{StaticResource MenuItemButton}"
                                 IsEnabled="{Binding CanCopy}"
+                                PreviewMouseLeftButtonDown="Item_MouseDown"
                                 Click="Item_Click"
                                 ToolTip="{Binding Value}">
                             <Grid>
