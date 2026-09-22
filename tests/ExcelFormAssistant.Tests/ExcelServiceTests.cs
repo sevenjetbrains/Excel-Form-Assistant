@@ -62,8 +62,9 @@ public sealed class ExcelServiceTests : IDisposable
     {
         var sample = Path.Combine(AppContext.BaseDirectory, "exemple.xlsx");
 
-        Assert.Equal(["Candidats", "Autre feuille"], _service.GetSheetNames(sample));
         var sheet = _service.LoadSheet(sample);
+
+        Assert.Equal(["Candidats", "Autre feuille"], sheet.SheetNames);
         Assert.Equal(["BENALI", "Ahmed", "15/05/1993", "Azazga", "0550123456"], sheet.Rows[0].Values);
     }
 
@@ -147,7 +148,6 @@ public sealed class ExcelServiceTests : IDisposable
         var lastWrite = File.GetLastWriteTimeUtc(_path);
 
         _service.LoadSheet(_path);
-        _service.GetSheetNames(_path);
 
         Assert.Equal(before, SHA256.HashData(File.ReadAllBytes(_path)));
         Assert.Equal(lastWrite, File.GetLastWriteTimeUtc(_path));

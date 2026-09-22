@@ -13,12 +13,6 @@ public sealed class ExcelService
 {
     private const string DateFormat = "dd/MM/yyyy";
 
-    public IReadOnlyList<string> GetSheetNames(string path)
-    {
-        using var workbook = OpenWorkbook(path);
-        return workbook.Worksheets.Select(ws => ws.Name).ToList();
-    }
-
     /// <summary>Lit une feuille (la première si <paramref name="sheetName"/> est null ou introuvable).</summary>
     public SheetData LoadSheet(string path, string? sheetName = null)
     {
@@ -48,7 +42,8 @@ public sealed class ExcelService
                 rows.Add(new ExcelRow(r, values));
         }
 
-        return new SheetData(worksheet.Name, columns, rows);
+        var sheetNames = workbook.Worksheets.Select(ws => ws.Name).ToList();
+        return new SheetData(worksheet.Name, sheetNames, columns, rows);
     }
 
     /// <summary>

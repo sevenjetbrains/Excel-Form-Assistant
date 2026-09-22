@@ -12,6 +12,9 @@ public sealed class MainViewModel : ViewModelBase
     private readonly Action<string> _showError;
 
     private string? _filePath;
+    private IReadOnlyList<string> _sheetNames = [];
+    private string? _selectedSheet;
+    private bool _isApplyingSheet;
     private IReadOnlyList<ExcelColumn> _columns = [];
     private IReadOnlyList<ExcelRow> _rows = [];
     private string _statusText = "Aucun fichier ouvert.";
@@ -42,6 +45,23 @@ public sealed class MainViewModel : ViewModelBase
         ? "Excel Form Assistant"
         : $"{Path.GetFileName(FilePath)} – Excel Form Assistant";
 
+    public IReadOnlyList<string> SheetNames
+    {
+        get => _sheetNames;
+        private set => SetProperty(ref _sheetNames, value);
+    }
+
+    /// <summary>Feuille affichée ; la changer depuis la liste déroulante relit le fichier.</summary>
+    public string? SelectedSheet
+    {
+        get => _selectedSheet;
+        set
+        {
+            if (SetProperty(ref _selectedSheet, value) && !_isApplyingSheet && value is not null && FilePath is not null)
+                LoadFile(FilePath, value);
+        }
+    }
+
     public IReadOnlyList<ExcelColumn> Columns
     {
         get => _columns;
@@ -67,22 +87,37 @@ public sealed class MainViewModel : ViewModelBase
             LoadFile(path);
     }
 
-    public void LoadFile(string path)
+    /// <summary>Charge une feuille du fichier (la première si <paramref name="sheetName"/> est null ou n'existe plus).</summary>
+    public bool LoadFile(string path, string? sheetName = null)
     {
         SheetData sheet;
         try
         {
-            sheet = _excelService.LoadSheet(path);
+            sheet = _excelService.LoadSheet(path, sheetName);
         }
         catch (Exception ex) // fichier verrouillé, corrompu, pas un vrai .xlsx…
         {
             _showError($"Impossible d'ouvrir le fichier :\n{path}\n\n{ex.Message}");
-            return;
+            return false;
         }
 
         FilePath = path;
+        SheetNames = sheet.SheetNames;
+
+        // Mettre à jour la liste déroulante sans déclencher une deuxième lecture.
+        _isApplyingSheet = true;
+        try
+        {
+            SelectedSheet = sheet.SheetName;
+        }
+        finally
+        {
+            _isApplyingSheet = false;
+        }
+
         Columns = sheet.Columns;
         Rows = sheet.Rows;
         StatusText = $"Feuille « {sheet.SheetName} » : {sheet.Rows.Count} ligne(s).";
+        return true;
     }
 }
