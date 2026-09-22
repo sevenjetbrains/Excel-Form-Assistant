@@ -39,6 +39,47 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public void ActivatingSelectedRow_SetsActiveRow()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        Assert.Null(vm.ActiveRow);
+        Assert.False(vm.ActivateSelectedRowCommand.CanExecute(null));
+
+        vm.SelectedRow = vm.Rows[0];
+        vm.ActivateSelectedRowCommand.Execute(null);
+
+        Assert.Same(vm.Rows[0], vm.ActiveRow);
+        Assert.Equal("Ligne active : BENALI Ahmed", vm.ActiveRowText);
+    }
+
+    [Fact]
+    public void SelectingAnotherRow_DoesNotChangeActiveRowUntilActivated()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        vm.SelectedRow = vm.Rows[0];
+        vm.ActivateSelectedRowCommand.Execute(null);
+
+        vm.SelectedRow = vm.Rows[1];
+
+        Assert.Equal("BENALI Ahmed", vm.ActiveRow?.Label);
+    }
+
+    [Fact]
+    public void ChangingSheet_ClearsActiveRow()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        vm.SelectedRow = vm.Rows[0];
+        vm.ActivateSelectedRowCommand.Execute(null);
+
+        vm.SelectedSheet = "Autre feuille";
+
+        Assert.Null(vm.ActiveRow);
+    }
+
+    [Fact]
     public void LoadFile_WithUnknownSheet_FallsBackToFirst()
     {
         var vm = CreateViewModel();

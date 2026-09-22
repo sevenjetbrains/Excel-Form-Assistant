@@ -18,14 +18,23 @@
 
         <!-- Barre d'état -->
         <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusText}" />
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel LastChildFill="False" />
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem DockPanel.Dock="Left">
+                <TextBlock Text="{Binding ActiveRowText}" FontWeight="SemiBold" />
+            </StatusBarItem>
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock Text="{Binding StatusText}" Foreground="#555555" />
             </StatusBarItem>
         </StatusBar>
 
         <!-- Colonnes générées dans MainWindow.xaml.cs à partir des en-têtes du fichier -->
         <DataGrid x:Name="DataTable"
                   ItemsSource="{Binding Rows}"
+                  SelectedItem="{Binding SelectedRow}"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   SelectionMode="Single"
@@ -38,6 +47,26 @@
                   Background="White"
                   RowHeight="26"
                   MinColumnWidth="80"
-                  Margin="8,0,8,8" />
+                  PreviewKeyDown="DataTable_PreviewKeyDown"
+                  Margin="8,0,8,8">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <EventSetter Event="MouseDoubleClick" Handler="DataTableRow_MouseDoubleClick" />
+                    <Style.Triggers>
+                        <!-- Ligne active : en gras sur fond jaune pâle -->
+                        <DataTrigger Value="True">
+                            <DataTrigger.Binding>
+                                <MultiBinding Converter="{x:Static views:ReferenceEqualsConverter.Instance}">
+                                    <Binding />
+                                    <Binding Path="DataContext.ActiveRow" RelativeSource="{RelativeSource AncestorType=DataGrid}" />
+                                </MultiBinding>
+                            </DataTrigger.Binding>
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Background" Value="#FFF3C4" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
     </DockPanel>
 </Window>

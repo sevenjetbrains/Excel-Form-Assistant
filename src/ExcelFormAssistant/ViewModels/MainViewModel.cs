@@ -17,6 +17,8 @@ public sealed class MainViewModel : ViewModelBase
     private bool _isApplyingSheet;
     private IReadOnlyList<ExcelColumn> _columns = [];
     private IReadOnlyList<ExcelRow> _rows = [];
+    private ExcelRow? _selectedRow;
+    private ExcelRow? _activeRow;
     private string _statusText = "Aucun fichier ouvert.";
 
     /// <param name="pickFile">Demande un fichier .xlsx à l'utilisateur ; null si annulé.</param>
@@ -27,9 +29,13 @@ public sealed class MainViewModel : ViewModelBase
         _pickFile = pickFile;
         _showError = showError;
         OpenCommand = new RelayCommand(Open);
+        ActivateSelectedRowCommand = new RelayCommand(ActivateSelectedRow, () => SelectedRow is not null);
     }
 
     public ICommand OpenCommand { get; }
+
+    /// <summary>Double-clic ou Entrée sur une ligne du tableau.</summary>
+    public ICommand ActivateSelectedRowCommand { get; }
 
     public string? FilePath
     {
@@ -74,6 +80,28 @@ public sealed class MainViewModel : ViewModelBase
         private set => SetProperty(ref _rows, value);
     }
 
+    /// <summary>Ligne surlignée dans le tableau (simple sélection).</summary>
+    public ExcelRow? SelectedRow
+    {
+        get => _selectedRow;
+        set => SetProperty(ref _selectedRow, value);
+    }
+
+    /// <summary>Ligne dont les données sont proposées dans le menu « Données Excel ».</summary>
+    public ExcelRow? ActiveRow
+    {
+        get => _activeRow;
+        private set
+        {
+            if (SetProperty(ref _activeRow, value))
+                OnPropertyChanged(nameof(ActiveRowText));
+        }
+    }
+
+    public string ActiveRowText => ActiveRow is null
+        ? "Aucune ligne active (double-clic ou Entrée sur une ligne)"
+        : $"Ligne active : {ActiveRow.Label}";
+
     public string StatusText
     {
         get => _statusText;
@@ -85,6 +113,12 @@ public sealed class MainViewModel : ViewModelBase
         var path = _pickFile();
         if (path is not null)
             LoadFile(path);
+    }
+
+    private void ActivateSelectedRow()
+    {
+        if (SelectedRow is not null)
+            ActiveRow = SelectedRow;
     }
 
     /// <summary>Charge une feuille du fichier (la première si <paramref name="sheetName"/> est null ou n'existe plus).</summary>
@@ -117,6 +151,7 @@ public sealed class MainViewModel : ViewModelBase
 
         Columns = sheet.Columns;
         Rows = sheet.Rows;
+        ActiveRow = null; // une ligne d'une autre feuille / d'un autre fichier n'a plus de sens
         StatusText = $"Feuille « {sheet.SheetName} » : {sheet.Rows.Count} ligne(s).";
         return true;
     }

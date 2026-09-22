@@ -6,7 +6,7 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 
 - [x] 1. Lecture du fichier Excel et affichage du tableau
 - [x] 2. Choix de la feuille
-- [ ] 3. Ligne active
+- [x] 3. Ligne active
 - [ ] 4. Menu « Données Excel » et copie dans le presse-papiers
 - [ ] 5. Raccourci global
 - [ ] 6. Recherche
