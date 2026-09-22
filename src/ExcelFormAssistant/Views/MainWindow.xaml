@@ -14,6 +14,8 @@
                       SelectedItem="{Binding SelectedSheet}"
                       MinWidth="160"
                       IsEnabled="{Binding FilePath, Converter={x:Static views:NotNullConverter.Instance}}" />
+            <Button Content="Menu Données Excel" Click="ShowDataMenu_Click" Padding="12,4" Margin="16,0,0,0"
+                    ToolTip="Ouvre le menu de la ligne active près de la souris" />
         </StackPanel>
 
         <!-- Barre d'état -->

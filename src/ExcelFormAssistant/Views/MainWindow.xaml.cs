@@ -12,6 +12,7 @@ public partial class MainWindow : Window
     private static readonly Style CellTextStyle = CreateCellTextStyle();
 
     private readonly MainViewModel _viewModel;
+    private readonly DataMenuPresenter _dataMenu;
 
     private static Style CreateCellTextStyle()
     {
@@ -22,13 +23,16 @@ public partial class MainWindow : Window
         return style;
     }
 
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, DataMenuPresenter dataMenu)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _dataMenu = dataMenu;
         DataContext = viewModel;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
+
+    private void ShowDataMenu_Click(object sender, RoutedEventArgs e) => _dataMenu.Show();
 
     private void DataTableRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {

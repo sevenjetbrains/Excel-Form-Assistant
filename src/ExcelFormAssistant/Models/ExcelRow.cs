@@ -5,6 +5,9 @@ namespace ExcelFormAssistant.Models;
 /// <param name="Values">Une valeur par colonne ; chaîne vide pour une cellule vide.</param>
 public sealed record ExcelRow(int RowNumber, IReadOnlyList<string> Values)
 {
+    /// <summary>Ce qui s'affiche à la place d'une cellule vide (jamais copié).</summary>
+    public const string EmptyDisplay = "—";
+
     /// <summary>Nom court de la ligne : ses deux premières valeurs non vides (ex. « BENALI Ahmed »).</summary>
     public string Label => string.Join(" ", Values.Where(v => v.Length > 0).Take(2));
 }

@@ -8,6 +8,9 @@ namespace ExcelFormAssistant;
 
 public partial class App : Application
 {
+    private ClipboardService? _clipboard;
+    private HotkeyService? _hotkeys;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -27,11 +30,22 @@ public partial class App : Application
             showError: message =>
                 MessageBox.Show(window!, message, "Excel Form Assistant", MessageBoxButton.OK, MessageBoxImage.Warning));
 
-        window = new MainWindow(viewModel);
+        _clipboard = new ClipboardService();
+        _hotkeys = new HotkeyService();
+        var dataMenu = new DataMenuPresenter(viewModel, _clipboard, _hotkeys);
+
+        window = new MainWindow(viewModel, dataMenu);
         window.Show();
 
         // Permet d'ouvrir un fichier passé en argument (glisser sur l'exe, tests).
         if (e.Args.Length > 0)
             viewModel.LoadFile(e.Args[0]);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _hotkeys?.Dispose();
+        _clipboard?.Dispose();
+        base.OnExit(e);
     }
 }
