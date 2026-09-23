@@ -11,7 +11,7 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 - [x] 5. Raccourci global
 - [x] 6. Recherche
 - [x] 7. Rechargement
-- [ ] 8. Mémorisation des paramètres
+- [x] 8. Mémorisation des paramètres
 
 ## Raccourci global
 
@@ -46,6 +46,24 @@ supprimée du fichier, elle est simplement oubliée.
 
 Le fichier peut rester ouvert dans Excel pendant le rechargement. S'il est devenu illisible
 (déplacé, supprimé), le message d'erreur s'affiche et le tableau garde ce qu'il montrait.
+
+## Mémorisation des paramètres
+
+À la fermeture, l'application retient dans
+`%AppData%\ExcelFormAssistant\parametres.json` le dernier fichier ouvert, la feuille
+affichée, et la position et la taille de la fenêtre. Au lancement suivant, tout est remis
+en place : le fichier est rouvert sur la même feuille.
+
+Rien de tout cela ne peut empêcher l'application de démarrer :
+
+- fichier de paramètres absent, vide ou abîmé → on repart des valeurs par défaut ;
+- dernier fichier déplacé ou supprimé → l'application s'ouvre vide, sans message d'erreur ;
+- écran débranché ou résolution changée depuis la dernière fois → la fenêtre revient
+  centrée plutôt que hors de l'écran ;
+- paramètres impossibles à enregistrer (dossier en lecture seule, disque plein) → la
+  fermeture se fait quand même.
+
+Un fichier passé en argument reste prioritaire sur le fichier mémorisé.
 
 ## Règles sur les données
 

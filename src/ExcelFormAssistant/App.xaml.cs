@@ -1,4 +1,6 @@
+using System.IO;
 using System.Windows;
+using ExcelFormAssistant.Models;
 using ExcelFormAssistant.Services;
 using ExcelFormAssistant.ViewModels;
 using ExcelFormAssistant.Views;
@@ -8,12 +10,18 @@ namespace ExcelFormAssistant;
 
 public partial class App : Application
 {
+    private readonly SettingsService _settings = new();
+
     private ClipboardService? _clipboard;
     private HotkeyService? _hotkeys;
+    private MainViewModel? _viewModel;
+    private WindowBounds? _windowBounds;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        var settings = _settings.Load();
 
         MainWindow? window = null;
         var viewModel = new MainViewModel(
@@ -39,16 +47,31 @@ public partial class App : Application
         shortcut.Enable(dataMenu.Show);
         viewModel.ShortcutText = shortcut.StatusText;
 
+        _viewModel = viewModel;
         window = new MainWindow(viewModel, dataMenu);
+        WindowPlacement.Apply(window, settings.Window);
+        window.Closing += (_, _) => _windowBounds = WindowPlacement.Capture(window);
         window.Show();
 
         // Permet d'ouvrir un fichier passé en argument (glisser sur l'exe, tests).
         if (e.Args.Length > 0)
             viewModel.LoadFile(e.Args[0]);
+
+        // Sinon, le fichier de la dernière fois. Disparu, on rouvre sans rien dire :
+        // un message d'erreur au démarrage n'apprendrait rien d'utile.
+        else if (settings.FilePath is not null && File.Exists(settings.FilePath))
+            viewModel.LoadFile(settings.FilePath, settings.SheetName);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _settings.Save(new Settings
+        {
+            FilePath = _viewModel?.FilePath,
+            SheetName = _viewModel?.SelectedSheet,
+            Window = _windowBounds,
+        });
+
         _hotkeys?.Dispose();
         _clipboard?.Dispose();
         base.OnExit(e);
