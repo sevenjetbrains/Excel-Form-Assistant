@@ -8,10 +8,19 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 - [x] 2. Choix de la feuille
 - [x] 3. Ligne active
 - [x] 4. Menu « Données Excel » et copie dans le presse-papiers
-- [ ] 5. Raccourci global
+- [x] 5. Raccourci global
 - [ ] 6. Recherche
 - [ ] 7. Rechargement
 - [ ] 8. Mémorisation des paramètres
+
+## Raccourci global
+
+`Ctrl+Maj+E` depuis n'importe quelle application ouvre le menu « Données Excel » de la ligne
+active, près de la souris : pas besoin de revenir à la fenêtre du logiciel.
+
+Si un autre logiciel utilise déjà la combinaison, la suivante de la liste est prise
+(`Ctrl+Maj+D`, `Ctrl+Alt+E`, `Ctrl+Alt+D`, `Ctrl+Maj+F12`). Le raccourci réellement actif est
+toujours affiché dans la barre d'état.
 
 ## Règles sur les données
 

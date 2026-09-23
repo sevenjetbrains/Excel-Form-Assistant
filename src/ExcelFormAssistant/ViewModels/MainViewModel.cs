@@ -20,6 +20,7 @@ public sealed class MainViewModel : ViewModelBase
     private ExcelRow? _selectedRow;
     private ExcelRow? _activeRow;
     private string _statusText = "Aucun fichier ouvert.";
+    private string _shortcutText = string.Empty;
 
     /// <param name="pickFile">Demande un fichier .xlsx à l'utilisateur ; null si annulé.</param>
     /// <param name="showError">Affiche un message d'erreur à l'utilisateur.</param>
@@ -106,6 +107,13 @@ public sealed class MainViewModel : ViewModelBase
     {
         get => _statusText;
         private set => SetProperty(ref _statusText, value);
+    }
+
+    /// <summary>Libellé du raccourci global, renseigné au démarrage par l'application.</summary>
+    public string ShortcutText
+    {
+        get => _shortcutText;
+        set => SetProperty(ref _shortcutText, value);
     }
 
     private void Open()

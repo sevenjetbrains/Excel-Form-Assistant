@@ -34,6 +34,11 @@ public partial class App : Application
         _hotkeys = new HotkeyService();
         var dataMenu = new DataMenuPresenter(viewModel, _clipboard, _hotkeys);
 
+        // Raccourci utilisable depuis le formulaire à remplir, sans revenir à cette fenêtre.
+        var shortcut = new GlobalShortcutService(_hotkeys);
+        shortcut.Enable(dataMenu.Show);
+        viewModel.ShortcutText = shortcut.StatusText;
+
         window = new MainWindow(viewModel, dataMenu);
         window.Show();
 

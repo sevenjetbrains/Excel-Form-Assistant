@@ -28,6 +28,11 @@
             <StatusBarItem DockPanel.Dock="Left">
                 <TextBlock Text="{Binding ActiveRowText}" FontWeight="SemiBold" />
             </StatusBarItem>
+            <Separator DockPanel.Dock="Left" Margin="10,0" />
+            <StatusBarItem DockPanel.Dock="Left">
+                <TextBlock Text="{Binding ShortcutText}" Foreground="#555555"
+                           ToolTip="Ouvre le menu de la ligne active depuis n'importe quelle application" />
+            </StatusBarItem>
             <StatusBarItem DockPanel.Dock="Right">
                 <TextBlock Text="{Binding StatusText}" Foreground="#555555" />
             </StatusBarItem>
