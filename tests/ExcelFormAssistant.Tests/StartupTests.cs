@@ -19,9 +19,10 @@ public sealed class StartupTests
     public void ShowingTheWindowAndLoadingAFile_ActivatesNoRow() => RunOnSta(() =>
     {
         var vm = new MainViewModel(new ExcelService(), () => null, _ => { });
-        using var clipboard = new ClipboardService();
         using var hotkeys = new HotkeyService();
-        var window = new MainWindow(vm, new DataMenuPresenter(vm, clipboard, hotkeys));
+        // Aucun envoi de touches ni de clic pendant les tests.
+        var paste = new PasteService(_ => true, () => IntPtr.Zero, () => { });
+        var window = new MainWindow(vm, new DataMenuPresenter(vm, paste, hotkeys));
 
         window.Show();
         DoEvents();

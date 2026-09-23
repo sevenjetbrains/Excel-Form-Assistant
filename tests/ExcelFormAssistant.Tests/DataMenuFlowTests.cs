@@ -12,15 +12,16 @@ using ExcelFormAssistant.Views;
 namespace ExcelFormAssistant.Tests;
 
 /// <summary>
-/// Chaîne complète : menu ouvert → choix d'une donnée → presse-papiers + bulle.
-/// Le clic est simulé par l'API d'accessibilité (ni la souris ni le clavier ne sont utilisés).
+/// Chaîne complète : menu ouvert → choix d'une donnée → presse-papiers, collage et bulle.
+/// Le clic est simulé par l'API d'accessibilité, et l'envoi du Ctrl+V est remplacé par un
+/// témoin : aucun test n'envoie de touches ni de clic dans les fenêtres de la machine.
 /// </summary>
 public sealed class DataMenuFlowTests
 {
     private static readonly string SamplePath = Path.Combine(AppContext.BaseDirectory, "exemple.xlsx");
 
     [Fact]
-    public void PickingAnItem_CopiesItAndShowsNotification() => RunOnSta(() =>
+    public void PickingAnItem_CopiesItPastesItAndShowsNotification() => RunOnSta(() =>
     {
         var vm = new MainViewModel(new ExcelService(), () => null, _ => { });
         vm.LoadFile(SamplePath);
@@ -29,13 +30,20 @@ public sealed class DataMenuFlowTests
 
         using var clipboard = new ClipboardService();
         using var hotkeys = new HotkeyService();
-        var presenter = new DataMenuPresenter(vm, clipboard, hotkeys);
+
+        // La fenêtre visée est relevée à l'ouverture du menu : le témoin la rend « au premier
+        // plan » pour que le collage soit tenté, sans qu'aucune touche ne soit réellement envoyée.
+        var target = IntPtr.Zero;
+        bool pasted = false;
+        var paste = new PasteService(clipboard.SetText, () => target, () => pasted = true);
+        var presenter = new DataMenuPresenter(vm, paste, hotkeys);
 
         presenter.Show();
         DoEvents();
 
         var menu = FindOpenWindow<DataMenuWindow>();
         Assert.NotNull(menu);
+        target = menu.TargetWindow;
         var buttons = FindChildren<Button>(menu).ToList();
         Assert.Equal(5, buttons.Count);
 
@@ -45,6 +53,7 @@ public sealed class DataMenuFlowTests
 
         Assert.True(menu.IsClosing, "le menu devrait se fermer après un choix");
         Assert.Equal("AMEUR", System.Windows.Clipboard.GetText());
+        Assert.True(pasted, "la valeur devrait être collée dans la fenêtre visée");
         Assert.NotNull(FindOpenWindow<NotificationWindow>());
     });
 

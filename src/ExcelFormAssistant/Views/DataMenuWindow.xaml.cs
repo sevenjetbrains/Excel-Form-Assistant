@@ -18,13 +18,13 @@ public partial class DataMenuWindow : Window
 
     private readonly IReadOnlyList<DataMenuItem> _items;
     private readonly HotkeyService _hotkeys;
-    private readonly Action<DataMenuItem> _onPick;
+    private readonly Action<DataMenuItem, IntPtr> _onPick;
     private readonly List<int> _registeredKeys = [];
     private readonly DispatcherTimer _outsideClickTimer;
     private IntPtr _foregroundAtOpen;
 
     public DataMenuWindow(string title, IReadOnlyList<DataMenuItem> items, string? emptyMessage,
-        HotkeyService hotkeys, Action<DataMenuItem> onPick)
+        HotkeyService hotkeys, Action<DataMenuItem, IntPtr> onPick)
     {
         InitializeComponent();
         _items = items;
@@ -58,6 +58,9 @@ public partial class DataMenuWindow : Window
 
     /// <summary>Vrai dès que la fermeture a commencé (Échap, choix, clic ailleurs…).</summary>
     public bool IsClosing { get; private set; }
+
+    /// <summary>Fenêtre qui avait le focus à l'ouverture : celle où coller la valeur choisie.</summary>
+    public IntPtr TargetWindow => _foregroundAtOpen;
 
     /// <summary>Ferme le menu ; sans effet s'il est déjà en train de se fermer.</summary>
     public void Dismiss()
@@ -121,7 +124,7 @@ public partial class DataMenuWindow : Window
         if (IsClosing || !item.CanCopy)
             return; // cellule vide : rien à copier, le menu reste ouvert
         Dismiss();
-        _onPick(item);
+        _onPick(item, _foregroundAtOpen);
     }
 
     private void CloseIfClickedOutside()

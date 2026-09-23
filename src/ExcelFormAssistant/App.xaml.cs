@@ -14,6 +14,7 @@ public partial class App : Application
 
     private ClipboardService? _clipboard;
     private HotkeyService? _hotkeys;
+    private MouseHookService? _mouseHook;
     private MainViewModel? _viewModel;
     private WindowBounds? _windowBounds;
 
@@ -40,12 +41,19 @@ public partial class App : Application
 
         _clipboard = new ClipboardService();
         _hotkeys = new HotkeyService();
-        var dataMenu = new DataMenuPresenter(viewModel, _clipboard, _hotkeys);
+        var dataMenu = new DataMenuPresenter(viewModel, new PasteService(_clipboard), _hotkeys);
 
         // Raccourci utilisable depuis le formulaire à remplir, sans revenir à cette fenêtre.
         var shortcut = new GlobalShortcutService(_hotkeys);
         shortcut.Enable(dataMenu.Show);
-        viewModel.ShortcutText = shortcut.StatusText;
+
+        // Maj + clic droit sur un champ. Le hook doit rendre la main tout de suite — le
+        // système attend sa réponse pour délivrer le clic — donc le menu s'ouvre juste après.
+        _mouseHook = new MouseHookService(() => Dispatcher.BeginInvoke(dataMenu.ShowOnClickedField));
+
+        viewModel.ShortcutText = _mouseHook.IsInstalled
+            ? $"{shortcut.StatusText} · Maj+clic droit sur un champ"
+            : shortcut.StatusText;
 
         _viewModel = viewModel;
         window = new MainWindow(viewModel, dataMenu);
@@ -72,6 +80,7 @@ public partial class App : Application
             Window = _windowBounds,
         });
 
+        _mouseHook?.Dispose();
         _hotkeys?.Dispose();
         _clipboard?.Dispose();
         base.OnExit(e);

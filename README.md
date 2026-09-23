@@ -1,6 +1,6 @@
 ﻿# Excel Form Assistant
 
-Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée d'une ligne Excel pour la coller ensuite dans n'importe quel formulaire avec Ctrl+V.
+Petite application Windows (C# / .NET 8 / WPF) qui colle en un clic une donnée d'une ligne Excel dans n'importe quel formulaire.
 
 ## Avancement (ordre du cahier des charges)
 
@@ -13,10 +13,38 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 - [x] 7. Rechargement
 - [x] 8. Mémorisation des paramètres
 
+Au-delà du cahier des charges :
+
+- [x] 9. Coller au clic droit sur le champ
+
+## Coller au clic droit
+
+**Maj + clic droit** sur un champ, dans n'importe quelle application, ouvre le menu
+« Données Excel » à l'endroit du curseur, avec les colonnes et les valeurs de la ligne
+active (`Nom : BENALI`, `Téléphone : 0550123456`…). Un clic sur une ligne du menu colle la
+valeur dans le champ.
+
+Le clic droit **seul** n'est pas touché : le menu contextuel habituel de l'application
+s'ouvre comme d'habitude. Seul le clic droit avec Maj est détourné, et dans ce cas
+l'application sous le curseur ne le reçoit pas — c'est pourquoi son menu n'apparaît pas.
+
+Ce qui se passe exactement au moment du collage :
+
+1. le clic droit est avalé, donc le champ n'a pas reçu le focus : un clic gauche le lui donne ;
+2. la valeur est **toujours** copiée dans le presse-papiers, même si le collage échoue ;
+3. Ctrl+V est envoyé à la fenêtre qui avait le focus à l'ouverture du menu, après avoir
+   relâché Maj (sinon le formulaire recevrait Ctrl+Maj+V, qui ne colle pas partout) ;
+4. si l'utilisateur a changé de fenêtre entre-temps, **rien n'est envoyé** : la bulle indique
+   « copié — Ctrl+V pour coller », pour ne jamais écrire ailleurs que là où il l'attend.
+
+Une entrée dans le menu contextuel de l'application elle-même n'est pas possible : chaque
+logiciel dessine son propre menu, et Windows n'offre aucun moyen d'y ajouter une ligne —
+les shell extensions ne concernent que les fichiers et dossiers de l'Explorateur.
+
 ## Raccourci global
 
-`Ctrl+Maj+E` depuis n'importe quelle application ouvre le menu « Données Excel » de la ligne
-active, près de la souris : pas besoin de revenir à la fenêtre du logiciel.
+`Ctrl+Maj+E` depuis n'importe quelle application ouvre le même menu près de la souris, sans
+quitter le clavier. Le collage suit les mêmes règles que ci-dessus.
 
 Si un autre logiciel utilise déjà la combinaison, la suivante de la liste est prise
 (`Ctrl+Maj+D`, `Ctrl+Alt+E`, `Ctrl+Alt+D`, `Ctrl+Maj+F12`). Le raccourci réellement actif est
