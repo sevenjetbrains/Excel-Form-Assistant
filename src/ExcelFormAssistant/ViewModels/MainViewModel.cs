@@ -16,7 +16,9 @@ public sealed class MainViewModel : ViewModelBase
     private string? _selectedSheet;
     private bool _isApplyingSheet;
     private IReadOnlyList<ExcelColumn> _columns = [];
+    private IReadOnlyList<ExcelRow> _allRows = [];
     private IReadOnlyList<ExcelRow> _rows = [];
+    private string _searchText = string.Empty;
     private ExcelRow? _selectedRow;
     private ExcelRow? _activeRow;
     private string _statusText = "Aucun fichier ouvert.";
@@ -31,12 +33,16 @@ public sealed class MainViewModel : ViewModelBase
         _showError = showError;
         OpenCommand = new RelayCommand(Open);
         ActivateSelectedRowCommand = new RelayCommand(ActivateSelectedRow, () => SelectedRow is not null);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => IsSearching);
     }
 
     public ICommand OpenCommand { get; }
 
     /// <summary>Double-clic ou Entrée sur une ligne du tableau.</summary>
     public ICommand ActivateSelectedRowCommand { get; }
+
+    /// <summary>Vide la recherche et réaffiche toutes les lignes.</summary>
+    public ICommand ClearSearchCommand { get; }
 
     public string? FilePath
     {
@@ -75,11 +81,27 @@ public sealed class MainViewModel : ViewModelBase
         private set => SetProperty(ref _columns, value);
     }
 
+    /// <summary>Lignes affichées : celles de la feuille, filtrées par la recherche.</summary>
     public IReadOnlyList<ExcelRow> Rows
     {
         get => _rows;
         private set => SetProperty(ref _rows, value);
     }
+
+    /// <summary>Texte de la zone de recherche ; le tableau se filtre à chaque frappe.</summary>
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (!SetProperty(ref _searchText, value ?? string.Empty))
+                return;
+            OnPropertyChanged(nameof(IsSearching));
+            ApplySearch();
+        }
+    }
+
+    public bool IsSearching => SearchText.Length > 0;
 
     /// <summary>Ligne surlignée dans le tableau (simple sélection).</summary>
     public ExcelRow? SelectedRow
@@ -158,9 +180,20 @@ public sealed class MainViewModel : ViewModelBase
         }
 
         Columns = sheet.Columns;
-        Rows = sheet.Rows;
+        _allRows = sheet.Rows;
         ActiveRow = null; // une ligne d'une autre feuille / d'un autre fichier n'a plus de sens
-        StatusText = $"Feuille « {sheet.SheetName} » : {sheet.Rows.Count} ligne(s).";
+        ApplySearch(); // une recherche en cours reste valable sur la nouvelle feuille
         return true;
+    }
+
+    private void ApplySearch()
+    {
+        Rows = RowSearch.Filter(_allRows, SearchText);
+        StatusText = (FilePath, IsSearching) switch
+        {
+            (null, _) => "Aucun fichier ouvert.",
+            (_, false) => $"Feuille « {SelectedSheet} » : {_allRows.Count} ligne(s).",
+            _ => $"Feuille « {SelectedSheet} » : {Rows.Count} ligne(s) trouvée(s) sur {_allRows.Count}.",
+        };
     }
 }

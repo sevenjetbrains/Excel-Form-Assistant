@@ -4,7 +4,11 @@
         xmlns:views="clr-namespace:ExcelFormAssistant.Views"
         Title="{Binding WindowTitle}"
         Width="900" Height="550" MinWidth="500" MinHeight="300"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
     <DockPanel>
         <!-- Barre d'outils -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
@@ -16,6 +20,20 @@
                       IsEnabled="{Binding FilePath, Converter={x:Static views:NotNullConverter.Instance}}" />
             <Button Content="Menu Données Excel" Click="ShowDataMenu_Click" Padding="12,4" Margin="16,0,0,0"
                     ToolTip="Ouvre le menu de la ligne active près de la souris" />
+
+            <TextBlock Text="Rechercher :" VerticalAlignment="Center" Margin="16,0,6,0" />
+            <Grid IsEnabled="{Binding FilePath, Converter={x:Static views:NotNullConverter.Instance}}">
+                <TextBox x:Name="SearchBox" Width="220" VerticalContentAlignment="Center" Padding="4,2,22,2"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         KeyDown="SearchBox_KeyDown"
+                         ToolTip="Ctrl+F pour venir ici. Tous les mots doivent correspondre, accents et majuscules ignorés. Échap efface." />
+                <!-- Croix d'effacement, sur le bord droit de la zone de saisie -->
+                <Button Content="✕" Command="{Binding ClearSearchCommand}"
+                        HorizontalAlignment="Right" Width="20" Margin="0,1,1,1" Padding="0"
+                        Background="Transparent" BorderThickness="0" Foreground="#777777"
+                        Cursor="Hand" Focusable="False" ToolTip="Effacer la recherche (Échap)"
+                        Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </StackPanel>
 
         <!-- Barre d'état -->

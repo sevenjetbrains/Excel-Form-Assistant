@@ -89,6 +89,78 @@ public sealed class MainViewModelTests
         Assert.Equal("Candidats", vm.SelectedSheet);
     }
 
+    [Theory]
+    [InlineData("ameur", "AMEUR")]          // nom
+    [InlineData("tizi", "AMEUR")]           // adresse
+    [InlineData("15/05/1993", "BENALI")]    // date telle qu'affichée, pas le numéro de série
+    [InlineData("0550", "BENALI")]          // téléphone, zéro initial conservé
+    [InlineData("benali ahmed", "BENALI")]  // deux colonnes
+    public void Search_FiltersTheDisplayedRows(string search, string expectedName)
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+
+        vm.SearchText = search;
+
+        Assert.Equal(expectedName, vm.Rows.Single().Values[0]);
+        Assert.True(vm.IsSearching);
+        Assert.Equal("Feuille « Candidats » : 1 ligne(s) trouvée(s) sur 2.", vm.StatusText);
+    }
+
+    [Fact]
+    public void Search_WithoutResult_ShowsAnEmptyTable()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+
+        vm.SearchText = "introuvable";
+
+        Assert.Empty(vm.Rows);
+        Assert.Equal("Feuille « Candidats » : 0 ligne(s) trouvée(s) sur 2.", vm.StatusText);
+    }
+
+    [Fact]
+    public void ClearingSearch_ShowsEveryRowAgain()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        Assert.False(vm.ClearSearchCommand.CanExecute(null));
+
+        vm.SearchText = "ameur";
+        Assert.True(vm.ClearSearchCommand.CanExecute(null));
+        vm.ClearSearchCommand.Execute(null);
+
+        Assert.Equal(2, vm.Rows.Count);
+        Assert.False(vm.IsSearching);
+        Assert.Equal("Feuille « Candidats » : 2 ligne(s).", vm.StatusText);
+    }
+
+    [Fact]
+    public void Search_KeepsTheActiveRowEvenWhenItIsFilteredOut()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        vm.SelectedRow = vm.Rows[0];
+        vm.ActivateSelectedRowCommand.Execute(null);
+
+        vm.SearchText = "ameur";
+
+        Assert.Equal("BENALI Ahmed", vm.ActiveRow?.Label);
+    }
+
+    [Fact]
+    public void ChangingSheet_KeepsTheSearchApplied()
+    {
+        var vm = CreateViewModel();
+        vm.LoadFile(SamplePath);
+        vm.SearchText = "azazga";
+
+        vm.SelectedSheet = "Autre feuille";
+
+        Assert.Equal(["Azazga", "15300"], vm.Rows.Single().Values);
+        Assert.Equal("azazga", vm.SearchText);
+    }
+
     [Fact]
     public void LoadFile_InvalidFile_ShowsErrorAndKeepsPreviousData()
     {

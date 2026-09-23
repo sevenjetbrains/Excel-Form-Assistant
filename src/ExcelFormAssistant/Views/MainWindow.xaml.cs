@@ -34,6 +34,36 @@ public partial class MainWindow : Window
 
     private void ShowDataMenu_Click(object sender, RoutedEventArgs e) => _dataMenu.Show();
 
+    /// <summary>Ctrl+F amène à la recherche depuis n'importe où dans la fenêtre.</summary>
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+        }
+    }
+
+    private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Escape:
+                _viewModel.SearchText = string.Empty;
+                e.Handled = true;
+                break;
+
+            // Entrée passe au tableau sur la première ligne trouvée ; une deuxième Entrée l'active.
+            case Key.Enter when _viewModel.Rows.Count > 0:
+                _viewModel.SelectedRow = _viewModel.Rows[0];
+                DataTable.ScrollIntoView(_viewModel.Rows[0]);
+                DataTable.Focus();
+                e.Handled = true;
+                break;
+        }
+    }
+
     private void DataTableRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton == MouseButton.Left)

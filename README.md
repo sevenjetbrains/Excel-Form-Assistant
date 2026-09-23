@@ -9,7 +9,7 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 - [x] 3. Ligne active
 - [x] 4. Menu « Données Excel » et copie dans le presse-papiers
 - [x] 5. Raccourci global
-- [ ] 6. Recherche
+- [x] 6. Recherche
 - [ ] 7. Rechargement
 - [ ] 8. Mémorisation des paramètres
 
@@ -21,6 +21,20 @@ active, près de la souris : pas besoin de revenir à la fenêtre du logiciel.
 Si un autre logiciel utilise déjà la combinaison, la suivante de la liste est prise
 (`Ctrl+Maj+D`, `Ctrl+Alt+E`, `Ctrl+Alt+D`, `Ctrl+Maj+F12`). Le raccourci réellement actif est
 toujours affiché dans la barre d'état.
+
+## Recherche
+
+`Ctrl+F` amène dans la zone « Rechercher », qui filtre le tableau à chaque frappe :
+
+- majuscules et accents ignorés : `benaissa` trouve `Benaïssa` ;
+- chaque mot tapé doit se trouver quelque part dans la ligne, dans n'importe quel ordre :
+  `benali ahmed` retrouve la ligne même si le nom et le prénom sont dans deux colonnes ;
+- la recherche porte sur le texte affiché : `15/05/1993` trouve la date, `0550` le téléphone ;
+- `Entrée` passe au tableau sur la première ligne trouvée (une deuxième `Entrée` l'active) ;
+- `Échap` ou la croix efface la recherche.
+
+La ligne active reste la même pendant une recherche, même si elle est filtrée : le menu
+« Données Excel » continue de proposer ses valeurs.
 
 ## Règles sur les données
 
