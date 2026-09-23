@@ -21,6 +21,7 @@ public partial class DataMenuWindow : Window
     private readonly Action<DataMenuItem, IntPtr> _onPick;
     private readonly List<int> _registeredKeys = [];
     private readonly DispatcherTimer _outsideClickTimer;
+    private readonly OutsideClickWatch _outsideClickWatch = new();
     private IntPtr _foregroundAtOpen;
 
     public DataMenuWindow(string title, IReadOnlyList<DataMenuItem> items, string? emptyMessage,
@@ -129,17 +130,15 @@ public partial class DataMenuWindow : Window
 
     private void CloseIfClickedOutside()
     {
-        // L'utilisateur est passé à une autre fenêtre (Alt+Tab, clic ailleurs…).
-        if (GetForegroundWindow() != _foregroundAtOpen)
-        {
-            Dismiss();
-            return;
-        }
-
+        var cursor = FloatingWindowHelper.GetCursorPosition();
         bool buttonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0
             || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0
             || (GetAsyncKeyState(VK_MBUTTON) & 0x8000) != 0;
-        if (buttonDown && !FloatingWindowHelper.Contains(this, FloatingWindowHelper.GetCursorPosition()))
+
+        if (_outsideClickWatch.ShouldDismiss(
+                foregroundChanged: GetForegroundWindow() != _foregroundAtOpen, // Alt+Tab, clic ailleurs…
+                anyButtonDown: buttonDown,
+                cursorInsideMenu: FloatingWindowHelper.Contains(this, cursor)))
             Dismiss();
     }
 }

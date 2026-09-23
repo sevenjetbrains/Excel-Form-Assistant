@@ -1,3 +1,4 @@
+using System.Windows.Threading;
 using static ExcelFormAssistant.Services.NativeMethods;
 
 namespace ExcelFormAssistant.Services;
@@ -9,6 +10,11 @@ namespace ExcelFormAssistant.Services;
 /// Ce clic-là est avalé : l'application sous le curseur ne le voit pas, donc son menu
 /// contextuel habituel n'apparaît pas et le nôtre prend sa place. Le clic droit seul,
 /// lui, n'est jamais touché.
+///
+/// Le hook vit sur son propre thread, avec sa propre boucle de messages : Windows supprime
+/// sans prévenir un hook bas niveau qui met plus de 300 ms à répondre (LowLevelHooksTimeout),
+/// et le thread d'interface, occupé à afficher le menu et la bulle, dépasse ce délai. Ici la
+/// réponse ne dépend que de ce thread-là, qui ne fait rien d'autre.
 /// </summary>
 public sealed class MouseHookService : IDisposable
 {
@@ -16,8 +22,9 @@ public sealed class MouseHookService : IDisposable
     private readonly Func<bool> _isShiftDown;
 
     // Le délégué doit rester référencé : sinon le ramasse-miettes le libère et Windows plante.
-    private readonly HookProc? _callback;
-    private readonly IntPtr _hook;
+    private HookProc? _callback;
+    private IntPtr _hook;
+    private Dispatcher? _hookThread;
 
     private bool _swallowedButtonDown;
 
@@ -35,8 +42,23 @@ public sealed class MouseHookService : IDisposable
         if (!install)
             return;
 
-        _callback = HookCallback;
-        _hook = SetWindowsHookEx(WH_MOUSE_LL, _callback, IntPtr.Zero, 0);
+        // On attend que le hook soit posé pour que IsInstalled soit déjà significatif.
+        using var installed = new ManualResetEventSlim();
+        var thread = new Thread(() =>
+        {
+            _callback = HookCallback;
+            _hook = SetWindowsHookEx(WH_MOUSE_LL, _callback, IntPtr.Zero, 0);
+            _hookThread = Dispatcher.CurrentDispatcher;
+            installed.Set();
+            Dispatcher.Run(); // boucle de messages : c'est elle qui fait appeler le hook
+        })
+        {
+            Name = "ExcelFormAssistant.MouseHook",
+            IsBackground = true,
+            Priority = ThreadPriority.AboveNormal, // répondre avant le délai de Windows
+        };
+        thread.Start();
+        installed.Wait(TimeSpan.FromSeconds(5));
     }
 
     /// <summary>Faux si Windows a refusé le hook : l'application reste utilisable au clavier.</summary>
@@ -76,7 +98,12 @@ public sealed class MouseHookService : IDisposable
 
     public void Dispose()
     {
-        if (IsInstalled)
-            UnhookWindowsHookEx(_hook);
+        // Retiré depuis le thread qui l'a posé, puis la boucle de messages s'arrête.
+        _hookThread?.Invoke(() =>
+        {
+            if (IsInstalled)
+                UnhookWindowsHookEx(_hook);
+        });
+        _hookThread?.InvokeShutdown();
     }
 }
