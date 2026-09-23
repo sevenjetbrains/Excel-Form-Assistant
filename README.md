@@ -10,7 +10,7 @@ Petite application Windows (C# / .NET 8 / WPF) qui copie en un clic une donnée 
 - [x] 4. Menu « Données Excel » et copie dans le presse-papiers
 - [x] 5. Raccourci global
 - [x] 6. Recherche
-- [ ] 7. Rechargement
+- [x] 7. Rechargement
 - [ ] 8. Mémorisation des paramètres
 
 ## Raccourci global
@@ -35,6 +35,17 @@ toujours affiché dans la barre d'état.
 
 La ligne active reste la même pendant une recherche, même si elle est filtrée : le menu
 « Données Excel » continue de proposer ses valeurs.
+
+## Rechargement
+
+Le bouton « Recharger » ou `F5` relit le fichier : ce qui a été modifié, ajouté ou supprimé
+dans Excel entre-temps apparaît dans le tableau. La feuille, la recherche en cours et la
+ligne active sont conservées — la ligne active est retrouvée par son numéro de ligne Excel,
+donc le menu « Données Excel » propose aussitôt les valeurs à jour. Si cette ligne a été
+supprimée du fichier, elle est simplement oubliée.
+
+Le fichier peut rester ouvert dans Excel pendant le rechargement. S'il est devenu illisible
+(déplacé, supprimé), le message d'erreur s'affiche et le tableau garde ce qu'il montrait.
 
 ## Règles sur les données
 

@@ -19,6 +19,7 @@ public sealed class MainViewModel : ViewModelBase
     private IReadOnlyList<ExcelRow> _allRows = [];
     private IReadOnlyList<ExcelRow> _rows = [];
     private string _searchText = string.Empty;
+    private string? _reloadNote;
     private ExcelRow? _selectedRow;
     private ExcelRow? _activeRow;
     private string _statusText = "Aucun fichier ouvert.";
@@ -34,6 +35,7 @@ public sealed class MainViewModel : ViewModelBase
         OpenCommand = new RelayCommand(Open);
         ActivateSelectedRowCommand = new RelayCommand(ActivateSelectedRow, () => SelectedRow is not null);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => IsSearching);
+        ReloadCommand = new RelayCommand(() => Reload(), () => FilePath is not null);
     }
 
     public ICommand OpenCommand { get; }
@@ -43,6 +45,9 @@ public sealed class MainViewModel : ViewModelBase
 
     /// <summary>Vide la recherche et réaffiche toutes les lignes.</summary>
     public ICommand ClearSearchCommand { get; }
+
+    /// <summary>Relit le fichier pour prendre en compte ce qui a été modifié dans Excel (F5).</summary>
+    public ICommand ReloadCommand { get; }
 
     public string? FilePath
     {
@@ -152,7 +157,21 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     /// <summary>Charge une feuille du fichier (la première si <paramref name="sheetName"/> est null ou n'existe plus).</summary>
-    public bool LoadFile(string path, string? sheetName = null)
+    public bool LoadFile(string path, string? sheetName = null) => Load(path, sheetName, keepRows: false);
+
+    /// <summary>
+    /// Relit le fichier et la feuille en cours. La ligne active et la ligne surlignée sont
+    /// retrouvées par leur numéro de ligne Excel : elles portent alors les valeurs à jour.
+    /// </summary>
+    public bool Reload()
+    {
+        if (FilePath is null)
+            return false;
+
+        return Load(FilePath, SelectedSheet, keepRows: true);
+    }
+
+    private bool Load(string path, string? sheetName, bool keepRows)
     {
         SheetData sheet;
         try
@@ -164,6 +183,10 @@ public sealed class MainViewModel : ViewModelBase
             _showError($"Impossible d'ouvrir le fichier :\n{path}\n\n{ex.Message}");
             return false;
         }
+
+        // Repères à retrouver après la relecture (les lignes sont de nouveaux objets).
+        int? activeRowNumber = keepRows ? ActiveRow?.RowNumber : null;
+        int? selectedRowNumber = keepRows ? SelectedRow?.RowNumber : null;
 
         FilePath = path;
         SheetNames = sheet.SheetNames;
@@ -181,10 +204,20 @@ public sealed class MainViewModel : ViewModelBase
 
         Columns = sheet.Columns;
         _allRows = sheet.Rows;
-        ActiveRow = null; // une ligne d'une autre feuille / d'un autre fichier n'a plus de sens
+        _reloadNote = keepRows ? $"Rechargé à {DateTime.Now:HH:mm:ss}." : null;
+
+        // Sans conservation : une ligne d'une autre feuille / d'un autre fichier n'a plus de sens.
+        ActiveRow = FindByRowNumber(activeRowNumber);
         ApplySearch(); // une recherche en cours reste valable sur la nouvelle feuille
+
+        // Après Rows : le tableau ne peut surligner qu'une ligne qu'il affiche.
+        var selected = FindByRowNumber(selectedRowNumber);
+        SelectedRow = selected is not null && Rows.Contains(selected) ? selected : null;
         return true;
     }
+
+    private ExcelRow? FindByRowNumber(int? rowNumber) =>
+        rowNumber is int number ? _allRows.FirstOrDefault(row => row.RowNumber == number) : null;
 
     private void ApplySearch()
     {
@@ -195,5 +228,7 @@ public sealed class MainViewModel : ViewModelBase
             (_, false) => $"Feuille « {SelectedSheet} » : {_allRows.Count} ligne(s).",
             _ => $"Feuille « {SelectedSheet} » : {Rows.Count} ligne(s) trouvée(s) sur {_allRows.Count}.",
         };
+        if (_reloadNote is not null)
+            StatusText += $" {_reloadNote}";
     }
 }

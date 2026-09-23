@@ -9,10 +9,15 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding ReloadCommand}" />
+    </Window.InputBindings>
     <DockPanel>
         <!-- Barre d'outils -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
             <Button Content="Ouvrir Excel" Command="{Binding OpenCommand}" Padding="12,4" />
+            <Button Content="Recharger" Command="{Binding ReloadCommand}" Padding="12,4" Margin="8,0,0,0"
+                    ToolTip="Relit le fichier pour prendre en compte les modifications faites dans Excel (F5)" />
             <TextBlock Text="Feuille :" VerticalAlignment="Center" Margin="16,0,6,0" />
             <ComboBox ItemsSource="{Binding SheetNames}"
                       SelectedItem="{Binding SelectedSheet}"
