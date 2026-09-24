@@ -16,6 +16,7 @@ namespace ExcelFormAssistant.Tests;
 /// Le clic est simulé par l'API d'accessibilité, et l'envoi du Ctrl+V est remplacé par un
 /// témoin : aucun test n'envoie de touches ni de clic dans les fenêtres de la machine.
 /// </summary>
+[Collection("Presse-papiers")]
 public sealed class DataMenuFlowTests
 {
     private static readonly string SamplePath = Path.Combine(AppContext.BaseDirectory, "exemple.xlsx");
@@ -36,13 +37,20 @@ public sealed class DataMenuFlowTests
         var target = IntPtr.Zero;
         bool pasted = false;
         var paste = new PasteService(clipboard.SetText, () => target, () => pasted = true);
-        var presenter = new DataMenuPresenter(vm, paste, hotkeys);
+        // Sans accrochage au bureau : le menu capterait Échap et les touches 1 à 9 sur toute
+        // la machine, et se fermerait au moindre changement de fenêtre au premier plan.
+        var presenter = new DataMenuPresenter(vm, paste, hotkeys) { HooksIntoDesktop = false };
 
         presenter.Show();
-        DoEvents();
 
-        var menu = FindOpenWindow<DataMenuWindow>();
+        // Référence prise au retour de Show(), pas en parcourant l'état WPF global :
+        // PresentationSource.CurrentSources est instable quand d'autres tests créent et
+        // détruisent des fenêtres en parallèle.
+        var menu = presenter.CurrentMenu;
         Assert.NotNull(menu);
+        DoEvents();
+        Assert.False(menu.IsClosing, "le menu ne devrait pas se refermer tout seul");
+        Assert.True(menu.IsVisible, "le menu devrait être affiché");
         target = menu.TargetWindow;
         var buttons = FindChildren<Button>(menu).ToList();
         Assert.Equal(5, buttons.Count);
@@ -54,12 +62,8 @@ public sealed class DataMenuFlowTests
         Assert.True(menu.IsClosing, "le menu devrait se fermer après un choix");
         Assert.Equal("AMEUR", System.Windows.Clipboard.GetText());
         Assert.True(pasted, "la valeur devrait être collée dans la fenêtre visée");
-        Assert.NotNull(FindOpenWindow<NotificationWindow>());
+        Assert.NotNull(NotificationWindow.Current);
     });
-
-    private static T? FindOpenWindow<T>() where T : Window =>
-        PresentationSource.CurrentSources.OfType<PresentationSource>()
-            .Select(s => s.RootVisual).OfType<T>().FirstOrDefault(w => w.IsVisible);
 
     private static IEnumerable<T> FindChildren<T>(DependencyObject parent) where T : DependencyObject
     {

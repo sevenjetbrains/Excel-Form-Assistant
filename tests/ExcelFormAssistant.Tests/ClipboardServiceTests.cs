@@ -5,6 +5,7 @@ using static ExcelFormAssistant.Services.NativeMethods;
 namespace ExcelFormAssistant.Tests;
 
 /// <summary>Ces tests écrivent dans le vrai presse-papiers Windows.</summary>
+[Collection("Presse-papiers")]
 public sealed class ClipboardServiceTests
 {
     [Theory]

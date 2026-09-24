@@ -43,9 +43,16 @@ public partial class DataMenuWindow : Window
 
         FloatingWindowHelper.MakeNonActivating(this);
 
-        // Sans focus, la fenêtre ne voit pas les clics ailleurs : on les surveille.
-        _outsideClickTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(50), DispatcherPriority.Input,
-            (_, _) => CloseIfClickedOutside(), Dispatcher);
+        // Sans focus, la fenêtre ne voit pas les clics ailleurs : on les surveille — mais
+        // seulement à partir de ShowNearCursor. Le constructeur de DispatcherTimer à quatre
+        // arguments démarre le minuteur immédiatement : il tiquait donc avant que la fenêtre
+        // visée ne soit relevée, la comparait à IntPtr.Zero, en concluait un changement de
+        // fenêtre, et refermait le menu aussitôt ouvert.
+        _outsideClickTimer = new DispatcherTimer(DispatcherPriority.Input, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(50),
+        };
+        _outsideClickTimer.Tick += (_, _) => CloseIfClickedOutside();
 
         Closing += (_, _) => IsClosing = true;
         Closed += (_, _) =>
@@ -71,15 +78,25 @@ public partial class DataMenuWindow : Window
     }
 
     /// <summary>Affiche le menu près de la souris, sans voler le focus.</summary>
-    public void ShowNearCursor()
+    /// <param name="hooksIntoDesktop">
+    /// Faux dans les tests. Le menu accroche sinon le bureau entier : il capte Échap et les
+    /// touches 1 à 9 comme raccourcis globaux, et surveille la fenêtre au premier plan et les
+    /// boutons de la souris. Un test ne maîtrise ni l'un ni l'autre — et n'a pas à confisquer
+    /// les touches de qui utilise la machine. La logique est vérifiée séparément par
+    /// <see cref="OutsideClickWatch"/> et les tests de <c>HotkeyService</c>.
+    /// </param>
+    public void ShowNearCursor(bool hooksIntoDesktop = true)
     {
         var cursor = FloatingWindowHelper.GetCursorPosition();
         _foregroundAtOpen = GetForegroundWindow();
 
         Show();
         FloatingWindowHelper.MoveNear(this, cursor, offset: 4);
-        RegisterKeys();
-        _outsideClickTimer.Start();
+        if (hooksIntoDesktop)
+        {
+            RegisterKeys();
+            _outsideClickTimer.Start();
+        }
     }
 
     /// <summary>Touches 1 à 9 (rangée du haut, avec ou sans Maj, et pavé numérique) et Échap.</summary>

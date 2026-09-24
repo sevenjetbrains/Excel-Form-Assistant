@@ -13,6 +13,12 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
 
     private DataMenuWindow? _menu;
 
+    /// <summary>Faux dans les tests : voir <see cref="DataMenuWindow.ShowNearCursor"/>.</summary>
+    internal bool HooksIntoDesktop { get; init; } = true;
+
+    /// <summary>Menu ouvert, ou null s'il n'y en a pas. Utilisé par les tests.</summary>
+    internal DataMenuWindow? CurrentMenu => _menu;
+
     /// <summary>
     /// Maj + clic droit sur un champ. Le clic droit a été avalé par le hook, donc le champ
     /// n'a pas reçu le focus : un clic gauche le lui donne avant d'ouvrir le menu.
@@ -45,7 +51,7 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
                 _menu = null;
         };
         _menu = menu;
-        menu.ShowNearCursor();
+        menu.ShowNearCursor(HooksIntoDesktop);
     }
 
     private void Copy(DataMenuItem item, IntPtr target)

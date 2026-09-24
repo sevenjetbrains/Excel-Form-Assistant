@@ -10,6 +10,9 @@ public partial class NotificationWindow : Window
 {
     private static NotificationWindow? _current;
 
+    /// <summary>Bulle affichée, ou null. Utilisée par les tests.</summary>
+    internal static NotificationWindow? Current => _current;
+
     private NotificationWindow(string message, bool isError)
     {
         InitializeComponent();
