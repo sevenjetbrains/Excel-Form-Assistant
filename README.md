@@ -104,6 +104,23 @@ Un fichier passé en argument reste prioritaire sur le fichier mémorisé.
 | Fichier ouvert dans Excel | Lu quand même (lecture partagée) |
 | Fichier original | Jamais modifié |
 
+## Fabriquer l'exécutable
+
+Un seul fichier, sans rien à installer sur le poste qui l'utilise :
+
+```
+dotnet publish src/ExcelFormAssistant -c Release -r win-x64 --self-contained true ^
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true ^
+  -p:EnableCompressionInSingleFile=true -o publish/autonome
+```
+
+Environ 70 Mo : .NET est embarqué dedans. Pour un poste où le *.NET 8 Desktop Runtime* est
+déjà installé, la même commande avec `--self-contained false` donne environ 10 Mo.
+
+L'icône est `src/ExcelFormAssistant/AppIcon.ico` (8 tailles, de 16 à 256 px). En dessous de
+32 px elle se simplifie en un bloc jaune et une flèche, car la feuille et ses lignes ne sont
+plus lisibles à cette taille.
+
 ## Compiler et tester
 
 Prérequis : SDK .NET 8.

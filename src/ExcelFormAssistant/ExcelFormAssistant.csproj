@@ -7,6 +7,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+    <AssemblyTitle>Excel Form Assistant</AssemblyTitle>
+    <Product>Excel Form Assistant</Product>
+    <Description>Colle en un clic une donnée d'une ligne Excel dans n'importe quel formulaire.</Description>
+    <Version>1.0.0</Version>
+    <!-- Nom du fichier publié, visible par l'utilisateur -->
+    <AssemblyName>ExcelFormAssistant</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
