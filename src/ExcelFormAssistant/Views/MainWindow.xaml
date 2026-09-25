@@ -41,6 +41,21 @@
             </Grid>
         </StackPanel>
 
+        <!-- Proposition de reprendre le fichier de la dernière session -->
+        <Border DockPanel.Dock="Top" Margin="8,0,8,8" Padding="10,6"
+                Background="#E8F1FB" BorderBrush="#A9C8EC" BorderThickness="1" CornerRadius="3"
+                Visibility="{Binding IsRecentFileOffered, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="✕" Command="{Binding DismissRecentFileCommand}"
+                        Width="24" Margin="6,0,0,0" Background="Transparent" BorderThickness="0"
+                        Foreground="#555555" Cursor="Hand" ToolTip="Masquer" />
+                <Button DockPanel.Dock="Right" Content="Rouvrir" Command="{Binding ReopenRecentFileCommand}"
+                        Padding="12,2" />
+                <TextBlock Text="{Binding RecentFileText}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding RecentFilePath}" />
+            </DockPanel>
+        </Border>
+
         <!-- Barre d'état -->
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBar.ItemsPanel>

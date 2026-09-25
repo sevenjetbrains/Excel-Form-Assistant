@@ -24,6 +24,9 @@ public sealed class MainViewModel : ViewModelBase
     private ExcelRow? _activeRow;
     private string _statusText = "Aucun fichier ouvert.";
     private string _shortcutText = string.Empty;
+    private string? _recentFilePath;
+    private string? _recentSheetName;
+    private bool _isRecentFileOffered;
 
     /// <param name="pickFile">Demande un fichier .xlsx à l'utilisateur ; null si annulé.</param>
     /// <param name="showError">Affiche un message d'erreur à l'utilisateur.</param>
@@ -36,7 +39,15 @@ public sealed class MainViewModel : ViewModelBase
         ActivateSelectedRowCommand = new RelayCommand(ActivateSelectedRow, () => SelectedRow is not null);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => IsSearching);
         ReloadCommand = new RelayCommand(() => Reload(), () => FilePath is not null);
+        ReopenRecentFileCommand = new RelayCommand(ReopenRecentFile, () => IsRecentFileOffered);
+        DismissRecentFileCommand = new RelayCommand(() => IsRecentFileOffered = false);
     }
+
+    /// <summary>Rouvre le fichier de la dernière session, proposé au démarrage.</summary>
+    public ICommand ReopenRecentFileCommand { get; }
+
+    /// <summary>Masque la proposition ; le fichier reste proposé à la prochaine ouverture.</summary>
+    public ICommand DismissRecentFileCommand { get; }
 
     public ICommand OpenCommand { get; }
 
@@ -143,6 +154,45 @@ public sealed class MainViewModel : ViewModelBase
         set => SetProperty(ref _shortcutText, value);
     }
 
+    /// <summary>Fichier et feuille de la dernière session, tant qu'aucun autre fichier n'a été ouvert.</summary>
+    public string? RecentFilePath => _recentFilePath;
+
+    public string? RecentSheetName => _recentSheetName;
+
+    /// <summary>Le bandeau « Reprendre le dernier fichier » est-il affiché ?</summary>
+    public bool IsRecentFileOffered
+    {
+        get => _isRecentFileOffered;
+        private set => SetProperty(ref _isRecentFileOffered, value);
+    }
+
+    public string RecentFileText => _recentFilePath is null
+        ? string.Empty
+        : _recentSheetName is null
+            ? $"Reprendre le dernier fichier : {Path.GetFileName(_recentFilePath)}"
+            : $"Reprendre le dernier fichier : {Path.GetFileName(_recentFilePath)} (feuille « {_recentSheetName} »)";
+
+    /// <summary>
+    /// Propose le fichier de la dernière session sans l'ouvrir : c'est l'utilisateur qui décide.
+    /// </summary>
+    public void OfferRecentFile(string path, string? sheetName)
+    {
+        _recentFilePath = path;
+        _recentSheetName = sheetName;
+        OnPropertyChanged(nameof(RecentFilePath));
+        OnPropertyChanged(nameof(RecentSheetName));
+        OnPropertyChanged(nameof(RecentFileText));
+        IsRecentFileOffered = true;
+    }
+
+    private void ReopenRecentFile()
+    {
+        if (_recentFilePath is not null)
+            LoadFile(_recentFilePath, _recentSheetName);
+        // Réussi ou non, la proposition a eu sa réponse (une erreur a déjà été affichée).
+        IsRecentFileOffered = false;
+    }
+
     private void Open()
     {
         var path = _pickFile();
@@ -190,6 +240,7 @@ public sealed class MainViewModel : ViewModelBase
 
         FilePath = path;
         SheetNames = sheet.SheetNames;
+        IsRecentFileOffered = false; // un fichier est ouvert : la proposition n'a plus d'objet
 
         // Mettre à jour la liste déroulante sans déclencher une deuxième lecture.
         _isApplyingSheet = true;

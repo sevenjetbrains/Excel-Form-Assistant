@@ -3,7 +3,7 @@ namespace ExcelFormAssistant.Models;
 /// <summary>Ce que l'application retient d'une session à l'autre.</summary>
 public sealed record Settings
 {
-    /// <summary>Dernier fichier ouvert ; rouvert au démarrage s'il existe toujours.</summary>
+    /// <summary>Dernier fichier ouvert ; proposé au démarrage s'il existe toujours.</summary>
     public string? FilePath { get; init; }
 
     /// <summary>Dernière feuille affichée de ce fichier.</summary>

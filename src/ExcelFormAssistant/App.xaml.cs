@@ -65,18 +65,20 @@ public partial class App : Application
         if (e.Args.Length > 0)
             viewModel.LoadFile(e.Args[0]);
 
-        // Sinon, le fichier de la dernière fois. Disparu, on rouvre sans rien dire :
-        // un message d'erreur au démarrage n'apprendrait rien d'utile.
+        // Sinon, le fichier de la dernière fois est proposé, pas ouvert d'office. Disparu, on
+        // ne propose rien : un message d'erreur au démarrage n'apprendrait rien d'utile.
         else if (settings.FilePath is not null && File.Exists(settings.FilePath))
-            viewModel.LoadFile(settings.FilePath, settings.SheetName);
+            viewModel.OfferRecentFile(settings.FilePath, settings.SheetName);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Fermé sans rien ouvrir : le fichier proposé le sera encore la prochaine fois.
+        bool fileOpen = _viewModel?.FilePath is not null;
         _settings.Save(new Settings
         {
-            FilePath = _viewModel?.FilePath,
-            SheetName = _viewModel?.SelectedSheet,
+            FilePath = fileOpen ? _viewModel!.FilePath : _viewModel?.RecentFilePath,
+            SheetName = fileOpen ? _viewModel!.SelectedSheet : _viewModel?.RecentSheetName,
             Window = _windowBounds,
         });
 

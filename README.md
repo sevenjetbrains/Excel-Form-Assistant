@@ -79,13 +79,16 @@ Le fichier peut rester ouvert dans Excel pendant le rechargement. S'il est deven
 
 À la fermeture, l'application retient dans
 `%AppData%\ExcelFormAssistant\parametres.json` le dernier fichier ouvert, la feuille
-affichée, et la position et la taille de la fenêtre. Au lancement suivant, tout est remis
-en place : le fichier est rouvert sur la même feuille.
+affichée, et la position et la taille de la fenêtre. Au lancement suivant, la fenêtre
+reprend sa place et un bandeau **propose** le dernier fichier, sans l'ouvrir d'office :
+« Reprendre le dernier fichier : exemple.xlsx (feuille « Candidats ») [Rouvrir] [✕] ».
+Rouvrir le charge sur la même feuille ; ✕ masque le bandeau, et le fichier sera encore
+proposé la prochaine fois si aucun autre n'a été ouvert entre-temps.
 
 Rien de tout cela ne peut empêcher l'application de démarrer :
 
 - fichier de paramètres absent, vide ou abîmé → on repart des valeurs par défaut ;
-- dernier fichier déplacé ou supprimé → l'application s'ouvre vide, sans message d'erreur ;
+- dernier fichier déplacé ou supprimé → rien n'est proposé, sans message d'erreur ;
 - écran débranché ou résolution changée depuis la dernière fois → la fenêtre revient
   centrée plutôt que hors de l'écran ;
 - paramètres impossibles à enregistrer (dossier en lecture seule, disque plein) → la

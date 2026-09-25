@@ -182,4 +182,55 @@ public sealed class MainViewModelTests
         Assert.Equal(SamplePath, vm.FilePath);
         Assert.Equal(2, vm.Rows.Count);
     }
+
+    [Fact]
+    public void OfferRecentFile_ProposesWithoutOpening()
+    {
+        var vm = CreateViewModel();
+
+        vm.OfferRecentFile(SamplePath, "Autre feuille");
+
+        Assert.True(vm.IsRecentFileOffered);
+        Assert.Null(vm.FilePath);
+        Assert.Empty(vm.Rows);
+        Assert.Equal("Reprendre le dernier fichier : exemple.xlsx (feuille « Autre feuille »)", vm.RecentFileText);
+    }
+
+    [Fact]
+    public void ReopenRecentFile_OpensFileOnRememberedSheet()
+    {
+        var vm = CreateViewModel();
+        vm.OfferRecentFile(SamplePath, "Autre feuille");
+
+        vm.ReopenRecentFileCommand.Execute(null);
+
+        Assert.Equal(SamplePath, vm.FilePath);
+        Assert.Equal("Autre feuille", vm.SelectedSheet);
+        Assert.False(vm.IsRecentFileOffered);
+    }
+
+    [Fact]
+    public void OpeningAnotherFile_HidesTheOffer()
+    {
+        var vm = CreateViewModel();
+        vm.OfferRecentFile("C:\ancien.xlsx", null);
+
+        vm.LoadFile(SamplePath);
+
+        Assert.False(vm.IsRecentFileOffered);
+    }
+
+    [Fact]
+    public void DismissingTheOffer_KeepsTheFileForNextTime()
+    {
+        var vm = CreateViewModel();
+        vm.OfferRecentFile(SamplePath, "Candidats");
+
+        vm.DismissRecentFileCommand.Execute(null);
+
+        Assert.False(vm.IsRecentFileOffered);
+        Assert.Null(vm.FilePath);
+        Assert.Equal(SamplePath, vm.RecentFilePath); // enregistré à la fermeture
+        Assert.Equal("Candidats", vm.RecentSheetName);
+    }
 }
