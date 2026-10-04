@@ -12,6 +12,15 @@ public enum PasteOutcome
     /// <summary>Tapée chiffre par chiffre : c'est le cas des sélecteurs de date.</summary>
     Typed,
 
+    /// <summary>Choisie dans une liste déroulante.</summary>
+    Chosen,
+
+    /// <summary>
+    /// Liste laissée ouverte et filtrée : plusieurs options correspondaient encore, et
+    /// l'application ne choisit pas à la place de l'utilisateur.
+    /// </summary>
+    Narrowed,
+
     /// <summary>Copiée puis collée par un Ctrl+V.</summary>
     Pasted,
 
@@ -31,6 +40,7 @@ public enum PasteOutcome
 /// <list type="number">
 /// <item>un sélecteur de date se tape, chiffre par chiffre — l'accessibilité accepte de
 /// l'écrire sans rien changer, et un Ctrl+V n'y entre pas ;</item>
+/// <item>une liste déroulante s'ouvre, se cherche et s'actionne, sans toucher au clavier ;</item>
 /// <item>un champ de saisie ordinaire s'écrit directement par l'accessibilité : la page
 /// reçoit son événement de saisie, et aucune touche ne part dans la mauvaise fenêtre ;</item>
 /// <item>sinon Ctrl+V, pour tout ce qui n'a pas été reconnu.</item>
@@ -81,8 +91,14 @@ public sealed class PasteService
             return PasteOutcome.Typed;
         }
 
-        if (field.Write is not null && field.Write(value))
-            return PasteOutcome.Written;
+        switch (field.Fill?.Invoke(value))
+        {
+            case FillResult.Done:
+                return field.Kind == FieldKind.List ? PasteOutcome.Chosen : PasteOutcome.Written;
+
+            case FillResult.Narrowed:
+                return PasteOutcome.Narrowed;
+        }
 
         _sendPaste();
         return PasteOutcome.Pasted;

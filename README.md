@@ -35,14 +35,20 @@ contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
 | Champ | Reconnu à | Rempli par |
 |---|---|---|
 | Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
+| Liste déroulante, y compris celles qui se cherchent (Select2) | elle s'ouvre | **ouverte, cherchée, et l'option actionnée** |
 | Champ de saisie ordinaire | il accepte qu'on lui écrive sa valeur | **écriture directe** : la page reçoit son événement de saisie |
 | Non reconnu | — | presse-papiers + `Ctrl+V` |
 
-Pourquoi trois moyens plutôt qu'un seul `Ctrl+V` : un sélecteur de date n'accepte ni le
-collage ni l'écriture par l'accessibilité — celle-ci dit oui et ne change rien, l'application
-relit donc toujours la valeur pour ne pas annoncer un succès à tort. À l'inverse, l'écriture
-directe est plus sûre qu'un `Ctrl+V` là où elle marche : aucune touche ne risque de partir
-dans la mauvaise fenêtre.
+Dans une liste, l'option n'est choisie que si son libellé correspond — à la casse et aux
+accents près — ou s'il n'en reste qu'une après la recherche. Sinon la liste est **laissée
+ouverte et filtrée** et la bulle invite à choisir : l'application ne décide jamais à la place
+de l'utilisateur quand plusieurs options restent possibles.
+
+Pourquoi plusieurs moyens plutôt qu'un seul `Ctrl+V` : un sélecteur de date comme une liste
+Select2 n'acceptent ni le collage ni l'écriture par l'accessibilité — celle-ci dit oui et ne
+change rien, l'application relit donc toujours la valeur pour ne pas annoncer un succès à
+tort. À l'inverse, l'écriture directe et le choix d'une option sont plus sûrs qu'un `Ctrl+V`
+là où ils marchent : aucune touche ne risque de partir dans la mauvaise fenêtre.
 
 Ce qui se passe exactement au moment du remplissage :
 

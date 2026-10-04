@@ -17,30 +17,66 @@ public enum FieldKind
     /// L'accessibilité refuse de l'écrire, il faut y taper les chiffres.
     /// </summary>
     Date,
+
+    /// <summary>
+    /// Liste déroulante, y compris les listes qui se cherchent comme Select2 : on l'ouvre,
+    /// on y écrit la recherche s'il y en a une, et on actionne l'option qui correspond.
+    /// </summary>
+    List,
+}
+
+/// <summary>Ce qu'a donné le remplissage d'un champ par l'accessibilité.</summary>
+public enum FillResult
+{
+    /// <summary>La valeur est en place.</summary>
+    Done,
+
+    /// <summary>
+    /// Plusieurs options restent possibles : la liste est laissée ouverte et filtrée,
+    /// à l'utilisateur de trancher. On ne choisit jamais à sa place.
+    /// </summary>
+    Narrowed,
+
+    /// <summary>Le champ n'a pas voulu : il reste le presse-papiers.</summary>
+    Failed,
 }
 
 /// <summary>
 /// Champ sous le curseur au moment du clic droit, et ce qu'on peut en faire.
 /// </summary>
-/// <param name="Write">
-/// Écriture directe de la valeur, si le champ l'accepte. Renvoie faux si elle n'a pas pris.
+/// <param name="Fill">
+/// Remplissage par l'accessibilité, si le champ l'accepte : écriture de la valeur pour un
+/// champ de saisie, choix de l'option pour une liste.
 /// </param>
 /// <param name="FocusPoint">
 /// Où cliquer pour donner le focus. Pour une date, le bord gauche du champ : la frappe
 /// commence à la case sous le curseur, et il faut donc viser le jour, pas le mois ni l'année.
 /// </param>
-public sealed record TargetField(FieldKind Kind, Func<string, bool>? Write = null, Point? FocusPoint = null)
+public sealed record TargetField(FieldKind Kind, Func<string, FillResult>? Fill = null, Point? FocusPoint = null)
 {
     public static readonly TargetField Unknown = new(FieldKind.Unknown);
 
     /// <summary>Décision isolée des appels Windows, pour rester vérifiable.</summary>
-    internal static FieldKind KindOf(bool hasValue, bool isReadOnly, int spinnerCount)
+    internal static FieldKind KindOf(bool hasValue, bool isReadOnly, int spinnerCount, bool canExpand)
     {
         if (spinnerCount >= 3)
             return FieldKind.Date; // jour + mois + année
 
+        // Avant le cas du champ de saisie : une liste Select2 annonce aussi une valeur,
+        // mais l'écrire ne change rien.
+        if (canExpand)
+            return FieldKind.List;
+
         return hasValue && !isReadOnly ? FieldKind.Text : FieldKind.Unknown;
     }
+
+    /// <summary>
+    /// Comparaison des libellés d'options : insensible à la casse et aux accents, comme la
+    /// recherche dans le tableau.
+    /// </summary>
+    internal static bool SameLabel(string option, string value) =>
+        CultureInfo.InvariantCulture.CompareInfo.Compare(option.Trim(), value.Trim(),
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) == 0;
 
     /// <summary>
     /// Chiffres à taper dans un sélecteur de date : « 15/05/1993 » donne « 15051993 ».

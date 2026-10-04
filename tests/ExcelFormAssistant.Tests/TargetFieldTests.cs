@@ -7,22 +7,43 @@ public sealed class TargetFieldTests
     [Fact]
     public void ThreeSpinners_MeanADateField() =>
         // Un <input type="date"> se présente en trois cases : jour, mois, année.
-        Assert.Equal(FieldKind.Date, TargetField.KindOf(hasValue: true, isReadOnly: false, spinnerCount: 3));
+        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 3, canExpand: false));
 
     [Fact]
     public void ADateField_IsRecognisedEvenWhenItRefusesToBeWritten() =>
         // C'est justement le cas de Chrome : la valeur s'y écrit sans rien changer.
-        Assert.Equal(FieldKind.Date, TargetField.KindOf(hasValue: true, isReadOnly: true, spinnerCount: 3));
+        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: true, spinnerCount: 3, canExpand: false));
+
+    [Fact]
+    public void AFieldThatOpens_IsAList() =>
+        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: true));
+
+    [Fact]
+    public void AListIsRecognisedBeforeATextField() =>
+        // Select2 annonce une valeur comme un champ de saisie, mais l'écrire ne change rien.
+        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: true));
 
     [Fact]
     public void AWritableFieldWithoutSpinners_IsAnOrdinaryTextField() =>
-        Assert.Equal(FieldKind.Text, TargetField.KindOf(hasValue: true, isReadOnly: false, spinnerCount: 0));
+        Assert.Equal(FieldKind.Text, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: false));
 
     [Theory]
     [InlineData(false, false)] // pas de valeur à écrire
     [InlineData(true, true)]   // champ en lecture seule
     public void WithoutAnythingWritable_TheFieldStaysUnknown(bool hasValue, bool isReadOnly) =>
-        Assert.Equal(FieldKind.Unknown, TargetField.KindOf(hasValue, isReadOnly, spinnerCount: 0));
+        Assert.Equal(FieldKind.Unknown, TargetField.KindOf(hasValue, isReadOnly, spinnerCount: 0, canExpand: false));
+
+    [Theory]
+    [InlineData("Ingénieur d'État", "ingenieur d'etat")] // accents et casse ignorés
+    [InlineData(" Technicien supérieur ", "Technicien supérieur")]
+    public void OptionLabels_AreComparedLoosely(string option, string value) =>
+        Assert.True(TargetField.SameLabel(option, value));
+
+    [Theory]
+    [InlineData("Ingénieur d'État", "Technicien")]
+    [InlineData("Ingénieur", "Ingénieur d'État")] // un libellé plus court n'est pas le même
+    public void DifferentLabels_AreNotConfused(string option, string value) =>
+        Assert.False(TargetField.SameLabel(option, value));
 
     [Theory]
     [InlineData("15/05/1993", "15051993")]

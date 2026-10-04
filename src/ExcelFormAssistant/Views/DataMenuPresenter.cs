@@ -69,6 +69,7 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
     private static string? FieldLabel(FieldKind kind) => kind switch
     {
         FieldKind.Date => "champ date",
+        FieldKind.List => "liste déroulante",
         FieldKind.Text => "champ de saisie",
         _ => null,
     };
@@ -83,6 +84,14 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
 
             case PasteOutcome.Typed:
                 NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} saisi (champ date)");
+                break;
+
+            case PasteOutcome.Chosen:
+                NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} choisi dans la liste");
+                break;
+
+            case PasteOutcome.Narrowed:
+                NotificationWindow.ShowNearCursor($"Liste filtrée sur « {Shorten(item.Value)} » : choisissez l'option");
                 break;
 
             case PasteOutcome.Pasted:

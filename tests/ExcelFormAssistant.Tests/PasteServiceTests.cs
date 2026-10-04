@@ -26,8 +26,12 @@ public sealed class PasteServiceTests
             _clicks.Add);
 
     /// <summary>Champ de saisie ordinaire : l'écriture directe réussit.</summary>
-    private TargetField TextField(bool writeSucceeds = true) =>
-        new(FieldKind.Text, Write: text => { _written.Add(text); return writeSucceeds; });
+    private TargetField TextField(FillResult result = FillResult.Done) =>
+        new(FieldKind.Text, Fill: text => { _written.Add(text); return result; });
+
+    /// <summary>Liste déroulante : le choix de l'option réussit, ou reste à trancher.</summary>
+    private TargetField ListField(FillResult result = FillResult.Done) =>
+        new(FieldKind.List, Fill: text => { _written.Add(text); return result; });
 
     private static TargetField DateField(Point? day = null) =>
         new(FieldKind.Date, FocusPoint: day);
@@ -86,9 +90,43 @@ public sealed class PasteServiceTests
     {
         var service = CreateService(Form);
 
-        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", TextField(writeSucceeds: false), Form));
+        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", TextField(FillResult.Failed), Form));
 
         Assert.Equal(["BENALI"], _written);
+        Assert.Equal(1, _pastes);
+    }
+
+    [Fact]
+    public void InAList_TheOptionIsChosen()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Chosen, service.Fill("Ingénieur d'État", ListField(), Form));
+
+        Assert.Equal(["Ingénieur d'État"], _written);
+        Assert.Equal(0, _pastes);
+        Assert.Empty(_typed);
+    }
+
+    [Fact]
+    public void InAList_WithSeveralOptionsLeft_NothingIsChosenInTheUserPlace()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Narrowed, service.Fill("ingénieur", ListField(FillResult.Narrowed), Form));
+
+        // La liste reste ouverte et filtrée : aucun collage ni frappe derrière.
+        Assert.Equal(0, _pastes);
+        Assert.Empty(_typed);
+    }
+
+    [Fact]
+    public void InAList_ThatRefusesEverything_ItFallsBackToPasting()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", ListField(FillResult.Failed), Form));
+
         Assert.Equal(1, _pastes);
     }
 
