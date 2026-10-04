@@ -1,4 +1,4 @@
-﻿# Excel Form Assistant
+# Excel Form Assistant
 
 Petite application Windows (C# / .NET 8 / WPF) qui colle en un clic une donnée d'une ligne Excel dans n'importe quel formulaire.
 
@@ -16,6 +16,7 @@ Petite application Windows (C# / .NET 8 / WPF) qui colle en un clic une donnée 
 Au-delà du cahier des charges :
 
 - [x] 9. Coller au clic droit sur le champ
+- [ ] 10. Remplissage automatique par zone — étape 1 faite : diagnostic (branche `feature/remplissage-auto`)
 
 ## Coller au clic droit
 
@@ -40,6 +41,27 @@ Ce qui se passe exactement au moment du collage :
 Une entrée dans le menu contextuel de l'application elle-même n'est pas possible : chaque
 logiciel dessine son propre menu, et Windows n'offre aucun moyen d'y ajouter une ligne —
 les shell extensions ne concernent que les fichiers et dossiers de l'Explorateur.
+
+## Analyse de formulaire (diagnostic)
+
+> Branche `feature/remplissage-auto` — première étape du remplissage automatique.
+> **Rien n'est rempli** : l'analyse montre seulement ce que le remplissage ferait.
+
+`Ctrl+Maj+F9` depuis le formulaire (ou le bouton « Analyser un formulaire ») assombrit
+l'écran : on trace un rectangle autour des champs. L'application lit alors ces champs par
+**UI Automation**, l'interface d'accessibilité de Windows, et affiche pour chacun :
+
+- son type (zone de texte, liste déroulante, case à cocher, mot de passe) ;
+- son libellé et d'où il vient : nom du champ (le `<label>` d'une page web), libellé lié,
+  texte d'aide, ou texte voisin à gauche / au-dessus ;
+- la colonne Excel de même nom — majuscules, accents, ponctuation, `*` et `:` ignorés
+  (« Prénom * : » = « PRENOM ») — et la valeur de la ligne active qui serait collée ;
+- le résultat : serait rempli, aucune colonne de ce nom, libellé introuvable, déjà rempli
+  (jamais écrasé), ou ignoré (mot de passe, lecture seule).
+
+Chaque champ est encadré à l'écran avec son numéro : vert s'il serait rempli, orange sans
+colonne, rouge sans libellé, gris s'il est ignoré. « Copier le rapport » copie un résumé
+**sans aucune valeur** (ni du fichier Excel, ni du formulaire), à envoyer pour analyse.
 
 ## Raccourci global
 

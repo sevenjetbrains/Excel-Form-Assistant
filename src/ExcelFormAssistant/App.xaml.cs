@@ -51,12 +51,18 @@ public partial class App : Application
         // système attend sa réponse pour délivrer le clic — donc le menu s'ouvre juste après.
         _mouseHook = new MouseHookService(() => Dispatcher.BeginInvoke(dataMenu.ShowOnClickedField));
 
-        viewModel.ShortcutText = _mouseHook.IsInstalled
+        // Analyse de formulaire (diagnostic du remplissage automatique), depuis le formulaire lui-même.
+        var formDiagnostic = new FormDiagnosticPresenter(viewModel, new FormFieldScanner(), _clipboard);
+        var formShortcut = new GlobalShortcutService(_hotkeys, GlobalShortcutService.FormAnalysisCandidates,
+            "Analyse de formulaire");
+        formShortcut.Enable(formDiagnostic.Start);
+
+        viewModel.ShortcutText = (_mouseHook.IsInstalled
             ? $"{shortcut.StatusText} · Maj+clic droit sur un champ"
-            : shortcut.StatusText;
+            : shortcut.StatusText) + $" · {formShortcut.StatusText}";
 
         _viewModel = viewModel;
-        window = new MainWindow(viewModel, dataMenu);
+        window = new MainWindow(viewModel, dataMenu, formDiagnostic);
         WindowPlacement.Apply(window, settings.Window);
         window.Closing += (_, _) => _windowBounds = WindowPlacement.Capture(window);
         window.Show();

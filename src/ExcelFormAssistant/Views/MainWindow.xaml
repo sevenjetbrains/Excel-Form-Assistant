@@ -25,6 +25,9 @@
                       IsEnabled="{Binding FilePath, Converter={x:Static views:NotNullConverter.Instance}}" />
             <Button Content="Menu Données Excel" Click="ShowDataMenu_Click" Padding="12,4" Margin="16,0,0,0"
                     ToolTip="Ouvre le menu de la ligne active près de la souris" />
+            <Button x:Name="AnalyzeFormButton" Content="Analyser un formulaire" Click="AnalyzeForm_Click"
+                    Padding="12,4" Margin="8,0,0,0"
+                    ToolTip="Diagnostic : tracez une zone autour des champs d'un formulaire pour voir lesquels seraient reconnus. Rien n'est rempli." />
 
             <TextBlock Text="Rechercher :" VerticalAlignment="Center" Margin="16,0,6,0" />
             <Grid IsEnabled="{Binding FilePath, Converter={x:Static views:NotNullConverter.Instance}}">

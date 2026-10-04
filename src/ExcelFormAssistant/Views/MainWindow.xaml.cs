@@ -13,6 +13,7 @@ public partial class MainWindow : Window
 
     private readonly MainViewModel _viewModel;
     private readonly DataMenuPresenter _dataMenu;
+    private readonly FormDiagnosticPresenter? _formDiagnostic;
 
     private static Style CreateCellTextStyle()
     {
@@ -23,16 +24,20 @@ public partial class MainWindow : Window
         return style;
     }
 
-    public MainWindow(MainViewModel viewModel, DataMenuPresenter dataMenu)
+    public MainWindow(MainViewModel viewModel, DataMenuPresenter dataMenu, FormDiagnosticPresenter? formDiagnostic = null)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _dataMenu = dataMenu;
+        _formDiagnostic = formDiagnostic;
+        AnalyzeFormButton.Visibility = formDiagnostic is null ? Visibility.Collapsed : Visibility.Visible;
         DataContext = viewModel;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     private void ShowDataMenu_Click(object sender, RoutedEventArgs e) => _dataMenu.Show();
+
+    private void AnalyzeForm_Click(object sender, RoutedEventArgs e) => _formDiagnostic?.Start();
 
     /// <summary>Ctrl+F amène à la recherche depuis n'importe où dans la fenêtre.</summary>
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
