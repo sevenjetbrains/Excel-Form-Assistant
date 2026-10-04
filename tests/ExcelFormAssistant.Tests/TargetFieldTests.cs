@@ -33,6 +33,28 @@ public sealed class TargetFieldTests
     public void WithoutAnythingWritable_TheFieldStaysUnknown(bool hasValue, bool isReadOnly) =>
         Assert.Equal(FieldKind.Unknown, TargetField.KindOf(hasValue, isReadOnly, spinnerCount: 0, canExpand: false));
 
+    [Fact]
+    public void AWriteThatShowsTheValue_IsASuccess() =>
+        Assert.Equal(FillResult.Done, TargetField.Verdict(before: "", after: "سمير", text: "سمير"));
+
+    [Fact]
+    public void AWriteThatChangedNothing_IsAFailure() =>
+        // Rien n'a bougé : le Ctrl+V de repli ne risque pas de doubler la valeur.
+        Assert.Equal(FillResult.Failed, TargetField.Verdict(before: "", after: "", text: "سمير"));
+
+    [Theory]
+    [InlineData("", "SMIR")]        // la page a reformaté la valeur
+    [InlineData("", "سمي")]         // la page n'a pas fini de se mettre à jour
+    [InlineData("ancien", "سمير x")]
+    public void AWriteThatChangedSomethingElse_CountsAsDoneRatherThanBeingPastedOver(string before, string after) =>
+        // C'est le bug du champ rempli en double : coller par-dessus ajouterait la valeur une
+        // seconde fois. Mieux vaut considérer que l'écriture a pris.
+        Assert.Equal(FillResult.Done, TargetField.Verdict(before, after, "سمير"));
+
+    [Fact]
+    public void AWriteIntoAFieldThatCannotBeRead_IsAFailure() =>
+        Assert.Equal(FillResult.Failed, TargetField.Verdict(before: null, after: null, text: "سمير"));
+
     [Theory]
     [InlineData("Ingénieur d'État", "ingenieur d'etat")] // accents et casse ignorés
     [InlineData(" Technicien supérieur ", "Technicien supérieur")]

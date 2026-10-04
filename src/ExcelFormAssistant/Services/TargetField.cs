@@ -71,6 +71,21 @@ public sealed record TargetField(FieldKind Kind, Func<string, FillResult>? Fill 
     }
 
     /// <summary>
+    /// Verdict d'une écriture, d'après la valeur du champ avant et après. La relecture peut
+    /// tomber avant que la page n'ait fini de se mettre à jour : on ne conclut à l'échec que
+    /// si <b>rien</b> n'a changé, car un collage par-dessus une écriture qui a pris mettrait
+    /// la valeur en double dans le champ.
+    /// </summary>
+    internal static FillResult Verdict(string? before, string? after, string text)
+    {
+        if (after == text)
+            return FillResult.Done;
+
+        // Changé, mais pas exactement : la page a reformaté la valeur, ou s'y attelle encore.
+        return after == before ? FillResult.Failed : FillResult.Done;
+    }
+
+    /// <summary>
     /// Comparaison des libellés d'options : insensible à la casse et aux accents, comme la
     /// recherche dans le tableau.
     /// </summary>

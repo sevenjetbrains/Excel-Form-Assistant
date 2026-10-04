@@ -29,7 +29,14 @@ public sealed class FieldInspector
     /// assez court pour ne pas figer l'application.
     /// </summary>
     private static readonly TimeSpan OptionsTimeout = TimeSpan.FromMilliseconds(1500);
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(50);
+
+    /// <summary>
+    /// Délai laissé à la page pour montrer la valeur écrite. Sans cette attente, la relecture
+    /// tombe avant la mise à jour, l'écriture passe pour un échec, et le Ctrl+V de repli met
+    /// la valeur en double.
+    /// </summary>
+    private static readonly TimeSpan WriteTimeout = TimeSpan.FromMilliseconds(400);
 
     public TargetField Inspect(Point cursor)
     {
@@ -188,19 +195,36 @@ public sealed class FieldInspector
     /// <summary>
     /// Écrit puis relit : l'accessibilité accepte parfois l'écriture sans rien changer
     /// (c'est le cas des sélecteurs de date), et il ne faut pas annoncer un succès à tort.
+    /// La relecture est réessayée : la page ne se met pas à jour dans l'instant.
     /// </summary>
     private static FillResult Write(ValuePattern value, AutomationElement element, string text)
     {
         try
         {
+            string? before = ReadValue(element);
             value.SetValue(text);
-            return GetValuePattern(element)?.Current.Value == text ? FillResult.Done : FillResult.Failed;
+
+            var deadline = DateTime.UtcNow + WriteTimeout;
+            string? after;
+            do
+            {
+                after = ReadValue(element);
+                if (after == text)
+                    return FillResult.Done;
+
+                Thread.Sleep(PollInterval);
+            }
+            while (DateTime.UtcNow < deadline);
+
+            return TargetField.Verdict(before, after, text);
         }
         catch (Exception ex) when (IsExpected(ex))
         {
             return FillResult.Failed;
         }
     }
+
+    private static string? ReadValue(AutomationElement element) => GetValuePattern(element)?.Current.Value;
 
     private static Point? LeftEdge(AutomationElement element)
     {
