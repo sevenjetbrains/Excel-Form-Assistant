@@ -21,7 +21,7 @@ public sealed class StartupTests
         var vm = new MainViewModel(new ExcelService(), () => null, _ => { });
         using var hotkeys = new HotkeyService();
         // Aucun envoi de touches ni de clic pendant les tests.
-        var paste = new PasteService(_ => true, () => IntPtr.Zero, () => { });
+        var paste = new PasteService(_ => true, () => IntPtr.Zero, () => { }, _ => { }, _ => { });
         var window = new MainWindow(vm, new DataMenuPresenter(vm, paste, hotkeys));
 
         window.Show();

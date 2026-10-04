@@ -46,6 +46,13 @@ internal static class FloatingWindowHelper
         return point;
     }
 
+    /// <summary>Position du curseur en coordonnées WPF, pour l'API d'accessibilité.</summary>
+    public static System.Windows.Point GetCursorPoint()
+    {
+        var point = GetCursorPosition();
+        return new System.Windows.Point(point.X, point.Y);
+    }
+
     /// <summary>
     /// Place la fenêtre (déjà affichée) en bas à droite de <paramref name="anchor"/>,
     /// en la gardant entièrement dans la zone de travail de l'écran.

@@ -36,7 +36,7 @@ public sealed class DataMenuFlowTests
         // plan » pour que le collage soit tenté, sans qu'aucune touche ne soit réellement envoyée.
         var target = IntPtr.Zero;
         bool pasted = false;
-        var paste = new PasteService(clipboard.SetText, () => target, () => pasted = true);
+        var paste = new PasteService(clipboard.SetText, () => target, () => pasted = true, _ => { }, _ => { });
         // Sans accrochage au bureau : le menu capterait Échap et les touches 1 à 9 sur toute
         // la machine, et se fermerait au moindre changement de fenêtre au premier plan.
         var presenter = new DataMenuPresenter(vm, paste, hotkeys) { HooksIntoDesktop = false };

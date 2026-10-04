@@ -57,6 +57,10 @@ internal static partial class NativeMethods
     public static partial bool GetCursorPos(out POINT point);
 
     [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetCursorPos(int x, int y);
+
+    [LibraryImport("user32.dll")]
     public static partial IntPtr MonitorFromPoint(POINT pt, int flags);
 
     [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
@@ -112,6 +116,7 @@ internal static partial class NativeMethods
     public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
     public const uint MOUSEEVENTF_LEFTUP = 0x0004;
     public const uint KEYEVENTF_KEYUP = 0x0002;
+    public const uint KEYEVENTF_UNICODE = 0x0004;
 
     public const ushort VK_SHIFT = 0x10;
     public const ushort VK_CONTROL = 0x11;

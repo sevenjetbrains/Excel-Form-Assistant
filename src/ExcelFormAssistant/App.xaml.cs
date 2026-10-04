@@ -41,7 +41,7 @@ public partial class App : Application
 
         _clipboard = new ClipboardService();
         _hotkeys = new HotkeyService();
-        var dataMenu = new DataMenuPresenter(viewModel, new PasteService(_clipboard), _hotkeys);
+        var dataMenu = new DataMenuPresenter(viewModel, new PasteService(_clipboard), _hotkeys, new FieldInspector());
 
         // Raccourci utilisable depuis le formulaire à remplir, sans revenir à cette fenêtre.
         var shortcut = new GlobalShortcutService(_hotkeys);

@@ -28,14 +28,37 @@ Le clic droit **seul** n'est pas touché : le menu contextuel habituel de l'appl
 s'ouvre comme d'habitude. Seul le clic droit avec Maj est détourné, et dans ce cas
 l'application sous le curseur ne le reçoit pas — c'est pourquoi son menu n'apparaît pas.
 
-Ce qui se passe exactement au moment du collage :
+Au clic droit, le champ visé est **reconnu** par l'API d'accessibilité, qui expose le
+contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
+(« Données Excel - BENALI Ahmed → champ date »), et la façon de le remplir s'y adapte :
 
-1. le clic droit est avalé, donc le champ n'a pas reçu le focus : un clic gauche le lui donne ;
-2. la valeur est **toujours** copiée dans le presse-papiers, même si le collage échoue ;
-3. Ctrl+V est envoyé à la fenêtre qui avait le focus à l'ouverture du menu, après avoir
-   relâché Maj (sinon le formulaire recevrait Ctrl+Maj+V, qui ne colle pas partout) ;
+| Champ | Reconnu à | Rempli par |
+|---|---|---|
+| Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
+| Champ de saisie ordinaire | il accepte qu'on lui écrive sa valeur | **écriture directe** : la page reçoit son événement de saisie |
+| Non reconnu | — | presse-papiers + `Ctrl+V` |
+
+Pourquoi trois moyens plutôt qu'un seul `Ctrl+V` : un sélecteur de date n'accepte ni le
+collage ni l'écriture par l'accessibilité — celle-ci dit oui et ne change rien, l'application
+relit donc toujours la valeur pour ne pas annoncer un succès à tort. À l'inverse, l'écriture
+directe est plus sûre qu'un `Ctrl+V` là où elle marche : aucune touche ne risque de partir
+dans la mauvaise fenêtre.
+
+Ce qui se passe exactement au moment du remplissage :
+
+1. le clic droit est avalé, donc le champ n'a pas reçu le focus : un clic gauche le lui donne.
+   Pour une date, ce clic vise le **bord gauche** du champ : la frappe commence à la case sous
+   le curseur, et il faut donc tomber sur le jour, pas sur le mois ni l'année ;
+2. la valeur est **toujours** copiée dans le presse-papiers, même si le remplissage échoue ;
+3. la valeur est écrite, tapée ou collée selon le champ, dans la fenêtre qui avait le focus à
+   l'ouverture du menu, après avoir relâché Maj (sinon le formulaire recevrait Ctrl+Maj+V, ou
+   des chiffres transformés en symboles) ;
 4. si l'utilisateur a changé de fenêtre entre-temps, **rien n'est envoyé** : la bulle indique
    « copié — Ctrl+V pour coller », pour ne jamais écrire ailleurs que là où il l'attend.
+
+La frappe des dates suppose que le champ présente ses cases dans l'ordre jour / mois / année,
+celui d'un Chrome en français. Sur un navigateur en anglais (mois / jour / année), la valeur
+arriverait dans le désordre.
 
 Une entrée dans le menu contextuel de l'application elle-même n'est pas possible : chaque
 logiciel dessine son propre menu, et Windows n'offre aucun moyen d'y ajouter une ligne —

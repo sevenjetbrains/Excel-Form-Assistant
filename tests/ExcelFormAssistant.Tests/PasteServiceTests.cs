@@ -1,10 +1,11 @@
+using System.Windows;
 using ExcelFormAssistant.Services;
 
 namespace ExcelFormAssistant.Tests;
 
 /// <summary>
-/// Le collage est testé sans toucher au clavier ni au presse-papiers réels :
-/// la copie, la fenêtre au premier plan et l'envoi du Ctrl+V sont des délégués.
+/// Choix de la façon de remplir le champ, sans toucher au clavier, à la souris
+/// ni au presse-papiers réels : tout est injecté.
 /// </summary>
 public sealed class PasteServiceTests
 {
@@ -12,53 +13,128 @@ public sealed class PasteServiceTests
     private static readonly IntPtr AnotherWindow = new(5678);
 
     private readonly List<string> _copied = [];
+    private readonly List<string> _typed = [];
+    private readonly List<Point> _clicks = [];
+    private readonly List<string> _written = [];
     private int _pastes;
 
     private PasteService CreateService(IntPtr foreground, bool clipboardAvailable = true) =>
         new(text => { if (!clipboardAvailable) return false; _copied.Add(text); return true; },
             () => foreground,
-            () => _pastes++);
+            () => _pastes++,
+            _typed.Add,
+            _clicks.Add);
+
+    /// <summary>Champ de saisie ordinaire : l'écriture directe réussit.</summary>
+    private TargetField TextField(bool writeSucceeds = true) =>
+        new(FieldKind.Text, Write: text => { _written.Add(text); return writeSucceeds; });
+
+    private static TargetField DateField(Point? day = null) =>
+        new(FieldKind.Date, FocusPoint: day);
 
     [Fact]
-    public void CopyAndPaste_IntoTheTargetWindow_CopiesThenPastes()
+    public void InATextField_TheValueIsWrittenDirectly()
     {
-        var service = CreateService(foreground: Form);
+        var service = CreateService(Form);
 
-        Assert.Equal(PasteOutcome.Pasted, service.CopyAndPaste("0550123456", Form));
+        Assert.Equal(PasteOutcome.Written, service.Fill("BENALI", TextField(), Form));
 
-        Assert.Equal(["0550123456"], _copied);
+        Assert.Equal(["BENALI"], _written);
+        Assert.Equal(["BENALI"], _copied); // copiée quand même, pour un Ctrl+V à la main
+        Assert.Equal(0, _pastes);
+        Assert.Empty(_typed);
+    }
+
+    [Fact]
+    public void InADateField_TheDigitsAreTypedAfterClickingTheDayBox()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Typed, service.Fill("15/05/1993", DateField(new Point(100, 50)), Form));
+
+        Assert.Equal(["15051993"], _typed); // sans les barres obliques
+        Assert.Equal([new Point(100, 50)], _clicks);
+        Assert.Equal(0, _pastes);
+    }
+
+    [Fact]
+    public void InADateField_WithoutAKnownBox_TypesWithoutClicking()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Typed, service.Fill("15/05/1993", DateField(), Form));
+
+        Assert.Equal(["15051993"], _typed);
+        Assert.Empty(_clicks);
+    }
+
+    [Fact]
+    public void InADateField_AValueThatIsNotADate_FallsBackToPasting()
+    {
+        var service = CreateService(Form);
+
+        // On ne tape jamais au hasard dans un sélecteur de date.
+        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", DateField(new Point(1, 2)), Form));
+
+        Assert.Empty(_typed);
+        Assert.Empty(_clicks);
         Assert.Equal(1, _pastes);
     }
 
     [Fact]
-    public void CopyAndPaste_WhenTheUserChangedWindow_CopiesWithoutTypingAnywhere()
+    public void WhenTheDirectWriteDoesNotTake_ItFallsBackToPasting()
     {
-        var service = CreateService(foreground: AnotherWindow);
+        var service = CreateService(Form);
 
-        Assert.Equal(PasteOutcome.CopiedOnly, service.CopyAndPaste("BENALI", Form));
+        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", TextField(writeSucceeds: false), Form));
 
-        Assert.Equal(["BENALI"], _copied); // Ctrl+V reste possible à la main
+        Assert.Equal(["BENALI"], _written);
+        Assert.Equal(1, _pastes);
+    }
+
+    [Fact]
+    public void InAnUnrecognisedField_ItPastes()
+    {
+        var service = CreateService(Form);
+
+        Assert.Equal(PasteOutcome.Pasted, service.Fill("BENALI", TargetField.Unknown, Form));
+
+        Assert.Equal(1, _pastes);
+    }
+
+    [Fact]
+    public void WhenTheUserChangedWindow_NothingIsSentAnywhere()
+    {
+        var service = CreateService(AnotherWindow);
+
+        Assert.Equal(PasteOutcome.CopiedOnly, service.Fill("15/05/1993", DateField(new Point(1, 2)), Form));
+
+        Assert.Equal(["15/05/1993"], _copied);
+        Assert.Empty(_typed);
+        Assert.Empty(_clicks);
+        Assert.Empty(_written);
         Assert.Equal(0, _pastes);
     }
 
     [Fact]
-    public void CopyAndPaste_WithoutAnyTargetWindow_CopiesOnly()
+    public void WithoutAnyTargetWindow_ItOnlyCopies()
     {
-        var service = CreateService(foreground: Form);
+        var service = CreateService(Form);
 
-        Assert.Equal(PasteOutcome.CopiedOnly, service.CopyAndPaste("BENALI", IntPtr.Zero));
+        Assert.Equal(PasteOutcome.CopiedOnly, service.Fill("BENALI", TextField(), IntPtr.Zero));
 
-        Assert.Equal(0, _pastes);
+        Assert.Empty(_written);
     }
 
     [Fact]
-    public void CopyAndPaste_WhenTheClipboardIsBusy_PastesNothing()
+    public void WhenTheClipboardIsBusy_NothingIsAttempted()
     {
-        var service = CreateService(foreground: Form, clipboardAvailable: false);
+        var service = CreateService(Form, clipboardAvailable: false);
 
-        Assert.Equal(PasteOutcome.ClipboardBusy, service.CopyAndPaste("BENALI", Form));
+        Assert.Equal(PasteOutcome.ClipboardBusy, service.Fill("BENALI", TextField(), Form));
 
         Assert.Empty(_copied);
+        Assert.Empty(_written);
         Assert.Equal(0, _pastes);
     }
 }

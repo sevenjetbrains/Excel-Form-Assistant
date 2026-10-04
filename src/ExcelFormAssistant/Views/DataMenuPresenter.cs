@@ -7,11 +7,13 @@ namespace ExcelFormAssistant.Views;
 /// Ouvre le menu « Données Excel » pour la ligne active, puis colle la donnée choisie
 /// dans le champ visé (et la laisse dans le presse-papiers dans tous les cas).
 /// </summary>
-public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService paste, HotkeyService hotkeys)
+public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService paste, HotkeyService hotkeys,
+    FieldInspector? inspector = null)
 {
     private const int MaxNotifiedLength = 40;
 
     private DataMenuWindow? _menu;
+    private TargetField _field = TargetField.Unknown;
 
     /// <summary>Faux dans les tests : voir <see cref="DataMenuWindow.ShowNearCursor"/>.</summary>
     internal bool HooksIntoDesktop { get; init; } = true;
@@ -25,17 +27,26 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
     /// </summary>
     public void ShowOnClickedField()
     {
+        // Reconnaître le champ avant le clic : le curseur est encore dessus, et le menu
+        // n'est pas encore affiché par-dessus.
+        _field = inspector?.Inspect(FloatingWindowHelper.GetCursorPoint()) ?? TargetField.Unknown;
+
         PasteService.FocusUnderCursor();
-        Show();
+        Show(_field);
     }
 
-    public void Show()
+    public void Show() => Show(TargetField.Unknown);
+
+    private void Show(TargetField field)
     {
         // Un seul menu à la fois.
         _menu?.Dismiss();
+        _field = field;
 
         var row = viewModel.ActiveRow;
         string title = row is null ? "Données Excel" : $"Données Excel - {row.Label}";
+        if (FieldLabel(field.Kind) is string label)
+            title += $" → {label}"; // le champ reconnu, affiché pour que l'utilisateur le voie
         var items = row is null ? [] : DataMenuItem.FromRow(row, viewModel.Columns);
         string? emptyMessage = (viewModel.FilePath, row) switch
         {
@@ -54,10 +65,26 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
         menu.ShowNearCursor(HooksIntoDesktop);
     }
 
+    /// <summary>Nom du champ reconnu, ou null s'il n'a pas été identifié.</summary>
+    private static string? FieldLabel(FieldKind kind) => kind switch
+    {
+        FieldKind.Date => "champ date",
+        FieldKind.Text => "champ de saisie",
+        _ => null,
+    };
+
     private void Copy(DataMenuItem item, IntPtr target)
     {
-        switch (paste.CopyAndPaste(item.Value, target))
+        switch (paste.Fill(item.Value, _field, target))
         {
+            case PasteOutcome.Written:
+                NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} écrit dans le champ");
+                break;
+
+            case PasteOutcome.Typed:
+                NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} saisi (champ date)");
+                break;
+
             case PasteOutcome.Pasted:
                 NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} collé");
                 break;
