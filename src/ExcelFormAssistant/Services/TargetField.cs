@@ -57,14 +57,20 @@ public sealed record TargetField(FieldKind Kind, Func<string, FillResult>? Fill 
     public static readonly TargetField Unknown = new(FieldKind.Unknown);
 
     /// <summary>Décision isolée des appels Windows, pour rester vérifiable.</summary>
-    internal static FieldKind KindOf(bool hasValue, bool isReadOnly, int spinnerCount, bool canExpand)
+    /// <param name="isList">
+    /// Le champ est annoncé comme une liste déroulante, et il s'ouvre. Pouvoir s'ouvrir ne
+    /// suffit pas : un champ de saisie ordinaire s'ouvre aussi, pour montrer les suggestions
+    /// de saisie automatique du navigateur. Le prendre pour une liste reviendrait à chercher
+    /// la valeur parmi ces suggestions au lieu de l'écrire.
+    /// </param>
+    internal static FieldKind KindOf(bool hasValue, bool isReadOnly, int spinnerCount, bool isList)
     {
         if (spinnerCount >= 3)
             return FieldKind.Date; // jour + mois + année
 
         // Avant le cas du champ de saisie : une liste Select2 annonce aussi une valeur,
         // mais l'écrire ne change rien.
-        if (canExpand)
+        if (isList)
             return FieldKind.List;
 
         return hasValue && !isReadOnly ? FieldKind.Text : FieldKind.Unknown;

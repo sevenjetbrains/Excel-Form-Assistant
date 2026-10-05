@@ -35,9 +35,13 @@ contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
 | Champ | Reconnu à | Rempli par |
 |---|---|---|
 | Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
-| Liste déroulante, y compris celles qui se cherchent (Select2) | elle s'ouvre | **ouverte, cherchée, et l'option actionnée** |
+| Liste déroulante, y compris celles qui se cherchent (Select2) | elle est **annoncée comme telle** et s'ouvre | **ouverte, cherchée, et l'option actionnée** |
 | Champ de saisie ordinaire | il accepte qu'on lui écrive sa valeur | **écriture directe** : la page reçoit son événement de saisie |
 | Non reconnu | — | presse-papiers + `Ctrl+V` |
+
+Pouvoir s'ouvrir ne suffit pas à faire une liste : un champ de saisie ordinaire s'ouvre aussi,
+pour montrer les suggestions de saisie automatique du navigateur. Le confondre avec une liste
+reviendrait à chercher la valeur parmi ces suggestions au lieu de l'écrire dans le champ.
 
 Dans une liste, l'option n'est choisie que si son libellé correspond — à la casse et aux
 accents près — ou s'il n'en reste qu'une après la recherche. Sinon la liste est **laissée

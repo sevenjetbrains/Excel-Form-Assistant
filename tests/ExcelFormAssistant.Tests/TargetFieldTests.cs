@@ -7,31 +7,37 @@ public sealed class TargetFieldTests
     [Fact]
     public void ThreeSpinners_MeanADateField() =>
         // Un <input type="date"> se présente en trois cases : jour, mois, année.
-        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 3, canExpand: false));
+        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 3, isList: false));
 
     [Fact]
     public void ADateField_IsRecognisedEvenWhenItRefusesToBeWritten() =>
         // C'est justement le cas de Chrome : la valeur s'y écrit sans rien changer.
-        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: true, spinnerCount: 3, canExpand: false));
+        Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: true, spinnerCount: 3, isList: false));
 
     [Fact]
     public void AFieldThatOpens_IsAList() =>
-        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: true));
+        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: true));
 
     [Fact]
     public void AListIsRecognisedBeforeATextField() =>
         // Select2 annonce une valeur comme un champ de saisie, mais l'écrire ne change rien.
-        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: true));
+        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: true));
+
+    [Fact]
+    public void ATextFieldWithBrowserSuggestions_StaysATextField() =>
+        // Il sait s'ouvrir pour montrer les suggestions de saisie automatique, mais la valeur
+        // doit y être écrite, pas cherchée parmi ces suggestions.
+        Assert.Equal(FieldKind.Text, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: false));
 
     [Fact]
     public void AWritableFieldWithoutSpinners_IsAnOrdinaryTextField() =>
-        Assert.Equal(FieldKind.Text, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, canExpand: false));
+        Assert.Equal(FieldKind.Text, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: false));
 
     [Theory]
     [InlineData(false, false)] // pas de valeur à écrire
     [InlineData(true, true)]   // champ en lecture seule
     public void WithoutAnythingWritable_TheFieldStaysUnknown(bool hasValue, bool isReadOnly) =>
-        Assert.Equal(FieldKind.Unknown, TargetField.KindOf(hasValue, isReadOnly, spinnerCount: 0, canExpand: false));
+        Assert.Equal(FieldKind.Unknown, TargetField.KindOf(hasValue, isReadOnly, spinnerCount: 0, isList: false));
 
     [Fact]
     public void AWriteThatShowsTheValue_IsASuccess() =>

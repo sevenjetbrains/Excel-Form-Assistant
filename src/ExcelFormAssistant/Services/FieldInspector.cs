@@ -51,9 +51,8 @@ public sealed class FieldInspector
             element = Promote(element);
 
             var value = GetValuePattern(element);
-            bool canExpand = Supports(element, ExpandCollapsePattern.Pattern);
             var kind = TargetField.KindOf(value is not null, value?.Current.IsReadOnly ?? true,
-                CountSpinners(element), canExpand);
+                CountSpinners(element), IsList(element));
 
             var field = element;
             return kind switch
@@ -70,6 +69,14 @@ public sealed class FieldInspector
         }
     }
 
+    /// <summary>
+    /// Une vraie liste déroulante : un &lt;select&gt;, ou l'habillage d'un Select2. Un champ de
+    /// saisie qui sait s'ouvrir pour proposer les suggestions du navigateur n'en est pas une.
+    /// </summary>
+    private static bool IsList(AutomationElement element) =>
+        element.Current.ControlType == ControlType.ComboBox
+        && Supports(element, ExpandCollapsePattern.Pattern);
+
     /// <summary>Remonte de la case ou du libellé intérieur vers le champ qui les porte.</summary>
     private static AutomationElement Promote(AutomationElement element)
     {
@@ -85,7 +92,7 @@ public sealed class FieldInspector
                 break;
 
             candidate = parent;
-            if (Supports(candidate, ExpandCollapsePattern.Pattern) || CountSpinners(candidate) >= 3)
+            if (IsList(candidate) || CountSpinners(candidate) >= 3)
                 return candidate;
         }
 
