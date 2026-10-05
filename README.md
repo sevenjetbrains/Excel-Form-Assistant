@@ -35,24 +35,20 @@ contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
 | Champ | Reconnu à | Rempli par |
 |---|---|---|
 | Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
-| Liste déroulante, y compris celles qui se cherchent (Select2) | elle est **annoncée comme telle** et s'ouvre | **ouverte, cherchée, et l'option actionnée** |
 | Champ de saisie ordinaire | il accepte qu'on lui écrive sa valeur | **écriture directe** : la page reçoit son événement de saisie |
+| Liste déroulante (`<select>`, Select2) | — | **rien** : presse-papiers + `Ctrl+V` |
 | Non reconnu | — | presse-papiers + `Ctrl+V` |
 
-Pouvoir s'ouvrir ne suffit pas à faire une liste : un champ de saisie ordinaire s'ouvre aussi,
-pour montrer les suggestions de saisie automatique du navigateur. Le confondre avec une liste
-reviendrait à chercher la valeur parmi ces suggestions au lieu de l'écrire dans le champ.
+Les listes déroulantes sont volontairement laissées tranquilles. Les ouvrir pour y choisir une
+option a été essayé puis retiré : trop de champs s'ouvrent sans être des listes — un champ de
+saisie ordinaire ouvre les suggestions du navigateur — et choisir une option à la place de
+l'utilisateur dans un dossier administratif n'en vaut pas le risque.
 
-Dans une liste, l'option n'est choisie que si son libellé correspond — à la casse et aux
-accents près — ou s'il n'en reste qu'une après la recherche. Sinon la liste est **laissée
-ouverte et filtrée** et la bulle invite à choisir : l'application ne décide jamais à la place
-de l'utilisateur quand plusieurs options restent possibles.
-
-Pourquoi plusieurs moyens plutôt qu'un seul `Ctrl+V` : un sélecteur de date comme une liste
-Select2 n'acceptent ni le collage ni l'écriture par l'accessibilité — celle-ci dit oui et ne
-change rien, l'application relit donc toujours la valeur pour ne pas annoncer un succès à
-tort. À l'inverse, l'écriture directe et le choix d'une option sont plus sûrs qu'un `Ctrl+V`
-là où ils marchent : aucune touche ne risque de partir dans la mauvaise fenêtre.
+Pourquoi plusieurs moyens plutôt qu'un seul `Ctrl+V` : un sélecteur de date n'accepte ni le
+collage ni l'écriture par l'accessibilité — celle-ci dit oui et ne change rien, l'application
+relit donc toujours la valeur pour ne pas annoncer un succès à tort. À l'inverse, l'écriture
+directe est plus sûre qu'un `Ctrl+V` là où elle marche : aucune touche ne risque de partir
+dans la mauvaise fenêtre.
 
 Ce qui se passe exactement au moment du remplissage :
 

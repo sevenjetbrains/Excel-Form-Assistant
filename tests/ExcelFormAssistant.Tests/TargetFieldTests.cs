@@ -15,18 +15,14 @@ public sealed class TargetFieldTests
         Assert.Equal(FieldKind.Date, TargetField.KindOf(true, isReadOnly: true, spinnerCount: 3, isList: false));
 
     [Fact]
-    public void AFieldThatOpens_IsAList() =>
-        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: true));
-
-    [Fact]
-    public void AListIsRecognisedBeforeATextField() =>
-        // Select2 annonce une valeur comme un champ de saisie, mais l'écrire ne change rien.
-        Assert.Equal(FieldKind.List, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: true));
+    public void ADropDownList_IsLeftAlone() =>
+        // L'application n'y touche pas : il restera le presse-papiers et Ctrl+V.
+        Assert.Equal(FieldKind.Unknown, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: true));
 
     [Fact]
     public void ATextFieldWithBrowserSuggestions_StaysATextField() =>
-        // Il sait s'ouvrir pour montrer les suggestions de saisie automatique, mais la valeur
-        // doit y être écrite, pas cherchée parmi ces suggestions.
+        // Il sait s'ouvrir pour montrer les suggestions de saisie automatique du navigateur,
+        // mais il n'est pas une liste pour autant : la valeur doit y être écrite.
         Assert.Equal(FieldKind.Text, TargetField.KindOf(true, isReadOnly: false, spinnerCount: 0, isList: false));
 
     [Fact]
@@ -61,17 +57,6 @@ public sealed class TargetFieldTests
     public void AWriteIntoAFieldThatCannotBeRead_IsAFailure() =>
         Assert.Equal(FillResult.Failed, TargetField.Verdict(before: null, after: null, text: "سمير"));
 
-    [Theory]
-    [InlineData("Ingénieur d'État", "ingenieur d'etat")] // accents et casse ignorés
-    [InlineData(" Technicien supérieur ", "Technicien supérieur")]
-    public void OptionLabels_AreComparedLoosely(string option, string value) =>
-        Assert.True(TargetField.SameLabel(option, value));
-
-    [Theory]
-    [InlineData("Ingénieur d'État", "Technicien")]
-    [InlineData("Ingénieur", "Ingénieur d'État")] // un libellé plus court n'est pas le même
-    public void DifferentLabels_AreNotConfused(string option, string value) =>
-        Assert.False(TargetField.SameLabel(option, value));
 
     [Theory]
     [InlineData("15/05/1993", "15051993")]
