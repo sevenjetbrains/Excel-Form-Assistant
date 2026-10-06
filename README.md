@@ -35,6 +35,12 @@ contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
 | Champ | Reconnu à | Rempli par |
 |---|---|---|
 | Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
+
+Le champ date est reconnu à ses trois cases, et non à son type : Chrome l'expose en champ de
+saisie, Firefox en simple groupe sans valeur, avec en plus un texte (« jj », « mm », « aaaa »)
+dans chaque case. L'application remonte donc depuis l'endroit cliqué jusqu'à l'ancêtre qui
+porte les trois cases, ce qui marche dans les deux navigateurs.
+
 | Champ de saisie ordinaire | il accepte qu'on lui écrive sa valeur | **écriture directe** : la page reçoit son événement de saisie |
 | Liste déroulante (`<select>`, Select2) | — | **rien** : presse-papiers + `Ctrl+V` |
 | Non reconnu | — | presse-papiers + `Ctrl+V` |

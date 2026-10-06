@@ -11,7 +11,9 @@ namespace ExcelFormAssistant.Services;
 /// Ce que chaque sorte de champ accepte a été mesuré sur Chrome :
 /// <list type="bullet">
 /// <item>champ de saisie : la valeur s'y écrit, et la page reçoit son événement de saisie ;</item>
-/// <item>sélecteur de date : l'écriture est acceptée sans rien changer — il faut taper ;</item>
+/// <item>sélecteur de date : l'écriture est acceptée sans rien changer — il faut taper. Chrome
+/// l'expose en champ de saisie, Firefox en groupe sans valeur : dans les deux cas ce sont ses
+/// trois cases jour / mois / année qui le font reconnaître ;</item>
 /// <item>liste déroulante : laissée tranquille, voir <see cref="TargetField.KindOf"/>.</item>
 /// </list>
 ///
@@ -22,6 +24,9 @@ public sealed class FieldInspector
 {
     /// <summary>Marge depuis le bord gauche d'une date, pour tomber sur la case du jour.</summary>
     private const int DayOffset = 12;
+
+    /// <summary>Niveaux remontés pour retrouver le champ : texte → case → groupe, chez Firefox.</summary>
+    private const int MaxPromoteLevels = 3;
 
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(50);
 
@@ -65,16 +70,31 @@ public sealed class FieldInspector
     private static bool IsList(AutomationElement element) =>
         element.Current.ControlType == ControlType.ComboBox;
 
-    /// <summary>Remonte de la case jour / mois / année vers le sélecteur de date qui la porte.</summary>
+    /// <summary>
+    /// Remonte de la case jour / mois / année vers le sélecteur de date qui la porte. La
+    /// profondeur dépend du navigateur : Chrome place les trois cases directement dans le
+    /// champ, Firefox glisse en plus un texte (« jj », « mm », « aaaa ») dans chacune et
+    /// enveloppe le tout dans un groupe. On remonte donc jusqu'à trouver l'ancêtre qui porte
+    /// les trois cases, sans dépasser le formulaire alentour.
+    /// </summary>
     private static AutomationElement Promote(AutomationElement element)
     {
-        if (element.Current.ControlType != ControlType.Spinner)
+        var type = element.Current.ControlType;
+        if (type != ControlType.Spinner && type != ControlType.Text)
             return element;
 
-        return TreeWalker.ControlViewWalker.GetParent(element) is AutomationElement parent
-            && CountSpinners(parent) >= 3
-                ? parent
-                : element;
+        var candidate = element;
+        for (int level = 0; level < MaxPromoteLevels; level++)
+        {
+            if (TreeWalker.ControlViewWalker.GetParent(candidate) is not AutomationElement parent)
+                break;
+
+            candidate = parent;
+            if (CountSpinners(candidate) >= 3)
+                return candidate;
+        }
+
+        return element;
     }
 
     private static ValuePattern? GetValuePattern(AutomationElement element) =>
