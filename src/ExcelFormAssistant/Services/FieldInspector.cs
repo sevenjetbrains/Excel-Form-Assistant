@@ -55,7 +55,7 @@ public sealed class FieldInspector
             var field = element;
             return kind switch
             {
-                FieldKind.Date => new TargetField(kind, FocusPoint: LeftEdge(field)),
+                FieldKind.Date => new TargetField(kind, FocusPoint: DayBox(field)),
                 FieldKind.Text => new TargetField(kind, Fill: text => Write(value!, field, text)),
                 _ => TargetField.Unknown,
             };
@@ -138,6 +138,30 @@ public sealed class FieldInspector
 
     private static string? ReadValue(AutomationElement element) => GetValuePattern(element)?.Current.Value;
 
+    /// <summary>
+    /// Où cliquer pour que la frappe commence au jour : la case du jour elle-même, dont
+    /// l'accessibilité donne la position. Viser le bord gauche du champ ne marcherait pas sur
+    /// un formulaire écrit de droite à gauche, où le bouton du calendrier se trouve à gauche —
+    /// le clic l'ouvrirait au lieu de saisir.
+    /// </summary>
+    private static Point? DayBox(AutomationElement element)
+    {
+        var boxes = element.FindAll(TreeScope.Children,
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Spinner));
+
+        // Les cases sont dans l'ordre du document : jour, puis mois, puis année.
+        if (boxes.Count > 0 && Center(boxes[0].Current.BoundingRectangle) is Point box)
+            return box;
+
+        return LeftEdge(element);
+    }
+
+    private static Point? Center(Rect rect) =>
+        rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0 || double.IsInfinity(rect.Left) || double.IsInfinity(rect.Top)
+            ? null
+            : new Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2);
+
+    /// <summary>Repli quand les cases n'ont pas de position connue.</summary>
     private static Point? LeftEdge(AutomationElement element)
     {
         var rect = element.Current.BoundingRectangle;

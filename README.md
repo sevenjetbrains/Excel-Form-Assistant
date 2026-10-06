@@ -59,8 +59,10 @@ dans la mauvaise fenêtre.
 Ce qui se passe exactement au moment du remplissage :
 
 1. le clic droit est avalé, donc le champ n'a pas reçu le focus : un clic gauche le lui donne.
-   Pour une date, ce clic vise le **bord gauche** du champ : la frappe commence à la case sous
-   le curseur, et il faut donc tomber sur le jour, pas sur le mois ni l'année ;
+   Pour une date, ce clic vise la **case du jour**, dont l'accessibilité donne la position : la
+   frappe commence à la case cliquée, et il faut donc tomber sur le jour, pas sur le mois ni
+   l'année. Viser le bord gauche du champ ne conviendrait pas à un formulaire écrit de droite à
+   gauche, où le bouton du calendrier se trouve à gauche — le clic l'ouvrirait ;
 2. la valeur est **toujours** copiée dans le presse-papiers, même si le remplissage échoue ;
 3. la valeur est écrite, tapée ou collée selon le champ, dans la fenêtre qui avait le focus à
    l'ouverture du menu, après avoir relâché Maj (sinon le formulaire recevrait Ctrl+Maj+V, ou
