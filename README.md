@@ -36,6 +36,11 @@ contenu des pages web. Le nom du champ reconnu s'affiche dans le titre du menu
 |---|---|---|
 | Sélecteur de date (`<input type="date">`) | ses trois cases jour / mois / année | la **frappe des chiffres** (`15051993`) |
 
+Firefox ne construit l'arbre d'accessibilité d'une page qu'à la demande : au moment du clic
+droit, le champ peut n'être pas encore visible pour l'application. Il est donc réexaminé au
+moment du choix de la valeur, quelques secondes plus tard — seconde tentative qui ne coûte
+rien, puisqu'elle n'a lieu qu'après un échec.
+
 Le champ date est reconnu à ses trois cases, et non à son type : Chrome l'expose en champ de
 saisie, Firefox en simple groupe sans valeur, avec en plus un texte (« jj », « mm », « aaaa »)
 dans chaque case. L'application remonte donc depuis l'endroit cliqué jusqu'à l'ancêtre qui

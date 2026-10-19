@@ -1,3 +1,4 @@
+using System.Windows;
 using ExcelFormAssistant.Services;
 using ExcelFormAssistant.ViewModels;
 
@@ -14,6 +15,7 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
 
     private DataMenuWindow? _menu;
     private TargetField _field = TargetField.Unknown;
+    private Point? _clickedPoint;
 
     /// <summary>Faux dans les tests : voir <see cref="DataMenuWindow.ShowNearCursor"/>.</summary>
     internal bool HooksIntoDesktop { get; init; } = true;
@@ -29,10 +31,12 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
     {
         // Reconnaître le champ avant le clic : le curseur est encore dessus, et le menu
         // n'est pas encore affiché par-dessus.
-        _field = inspector?.Inspect(FloatingWindowHelper.GetCursorPoint()) ?? TargetField.Unknown;
+        var point = FloatingWindowHelper.GetCursorPoint();
+        var field = inspector?.Inspect(point) ?? TargetField.Unknown;
 
         PasteService.FocusUnderCursor();
-        Show(_field);
+        Show(field);
+        _clickedPoint = point; // gardé pour une seconde tentative au moment du choix
     }
 
     public void Show() => Show(TargetField.Unknown);
@@ -42,6 +46,7 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
         // Un seul menu à la fois.
         _menu?.Dismiss();
         _field = field;
+        _clickedPoint = null;
 
         var row = viewModel.ActiveRow;
         string title = row is null ? "Données Excel" : $"Données Excel - {row.Label}";
@@ -65,6 +70,22 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
         menu.ShowNearCursor(HooksIntoDesktop);
     }
 
+    /// <summary>
+    /// Le champ, réexaminé au moment du choix s'il n'avait pas été reconnu. Firefox ne
+    /// construit l'arbre d'accessibilité d'une page qu'à la demande : au clic droit il peut
+    /// n'être pas encore prêt, alors qu'il l'est quelques secondes plus tard, quand
+    /// l'utilisateur choisit sa valeur. Cette seconde tentative ne coûte rien puisqu'elle
+    /// n'a lieu qu'après un échec.
+    /// </summary>
+    private TargetField FieldAtPick()
+    {
+        if (_field.Kind != FieldKind.Unknown || _clickedPoint is not Point point || inspector is null)
+            return _field;
+
+        _field = inspector.Inspect(point);
+        return _field;
+    }
+
     /// <summary>Nom du champ reconnu, ou null s'il n'a pas été identifié.</summary>
     private static string? FieldLabel(FieldKind kind) => kind switch
     {
@@ -75,7 +96,7 @@ public sealed class DataMenuPresenter(MainViewModel viewModel, PasteService past
 
     private void Copy(DataMenuItem item, IntPtr target)
     {
-        switch (paste.Fill(item.Value, _field, target))
+        switch (paste.Fill(item.Value, FieldAtPick(), target))
         {
             case PasteOutcome.Written:
                 NotificationWindow.ShowNearCursor($"✓ {Shorten(item.Value)} écrit dans le champ");
